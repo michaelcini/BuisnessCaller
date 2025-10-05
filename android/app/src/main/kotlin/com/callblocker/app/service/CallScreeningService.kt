@@ -25,13 +25,11 @@ class CallScreeningService : CallScreeningService() {
 
     override fun onScreenCall(callDetails: Call.Details) {
         val phoneNumber = callDetails.handle?.schemeSpecificPart
-        val callId = callDetails.callId
         Log.i(TAG, "=== CALL SCREENING STARTED ===")
-        Log.i(TAG, "Call ID: $callId")
         Log.i(TAG, "Phone Number: $phoneNumber")
         Log.i(TAG, "Call State: ${callDetails.state}")
-        Log.i(TAG, "Call Capabilities: ${callDetails.capabilities}")
-        Log.i(TAG, "Call Properties: ${callDetails.callProperties}")
+        Log.i(TAG, "Call Handle: ${callDetails.handle}")
+        Log.i(TAG, "Call Creation Time: ${callDetails.creationTimeMillis}")
 
         val shouldBlock = shouldBlockCall(phoneNumber)
         

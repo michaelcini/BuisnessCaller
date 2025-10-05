@@ -202,26 +202,26 @@ class MainActivity: FlutterActivity() {
 
     private fun isCallScreeningEnabled(): Boolean {
         return try {
-            // For Android 10+ (API 29+), we need to check if our app is set as the default call screening app
-            val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+            // For Android 10+ (API 29+), we need to check if our CallScreeningService is registered
+            val packageManager = packageManager
+            val serviceIntent = Intent("android.telecom.CallScreeningService")
+            serviceIntent.setPackage(packageName)
             
-            // Check if our app is the default call screening app
-            val defaultCallScreeningApp = telecomManager.defaultCallScreeningApp
-            val isDefault = defaultCallScreeningApp == packageName
+            val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+            val isRegistered = resolveInfo != null
             
             Log.i("MainActivity", "=== CALL SCREENING STATUS CHECK ===")
-            Log.i("MainActivity", "Default call screening app: $defaultCallScreeningApp")
+            Log.i("MainActivity", "CallScreeningService registered: $isRegistered")
             Log.i("MainActivity", "Our package name: $packageName")
-            Log.i("MainActivity", "Is our app the default: $isDefault")
             
-            if (isDefault) {
-                Log.i("MainActivity", "Call screening is ENABLED - App is set as default")
+            if (isRegistered) {
+                Log.i("MainActivity", "Call screening service is REGISTERED")
+                Log.i("MainActivity", "User needs to set this app as default call screening app in Settings")
             } else {
-                Log.w("MainActivity", "Call screening is DISABLED - App is NOT set as default")
-                Log.w("MainActivity", "User needs to go to Settings > Default Apps > Call Screening App")
+                Log.w("MainActivity", "Call screening service is NOT REGISTERED")
             }
             
-            isDefault
+            isRegistered
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking call screening status: ${e.message}")
             e.printStackTrace()
@@ -244,11 +244,10 @@ class MainActivity: FlutterActivity() {
             Log.i("MainActivity", "Service info: ${resolveInfo.serviceInfo}")
         }
         
-        // Check if we're the default call screening app
+        // Check if we're registered as a call screening service
         val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
-        val defaultApp = telecomManager.defaultCallScreeningApp
-        Log.i("MainActivity", "Default call screening app: $defaultApp")
-        Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+        Log.i("MainActivity", "TelecomManager available: ${telecomManager != null}")
+        Log.i("MainActivity", "Note: User must manually set this app as default call screening app")
         
         // Check permissions
         val phonePermission = checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE)
