@@ -21,6 +21,7 @@ jobs:
       with:
         flutter-version: '3.16.0'
         channel: 'stable'
+        android-sdk-version: '34'
         
     - name: Install dependencies
       run: flutter pub get
