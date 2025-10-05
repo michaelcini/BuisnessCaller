@@ -107,19 +107,36 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pushNamed(context, '/logs');
-                            },
-                            icon: const Icon(Icons.list_alt),
-                            label: const Text('View Logs'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[100],
-                              foregroundColor: Colors.blue[800],
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/logs');
+                                },
+                                icon: const Icon(Icons.list_alt),
+                                label: const Text('View Logs'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[100],
+                                  foregroundColor: Colors.blue[800],
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/setup');
+                                },
+                                icon: const Icon(Icons.build),
+                                label: const Text('Setup'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange[100],
+                                  foregroundColor: Colors.orange[800],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

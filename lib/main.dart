@@ -7,6 +7,7 @@ import 'screens/about_screen.dart';
 import 'screens/permission_screen.dart';
 import 'screens/privacy_policy_screen.dart';
 import 'screens/log_screen.dart';
+import 'screens/setup_screen.dart';
 import 'services/call_blocker_service.dart';
 import 'services/log_service.dart';
 import 'domain/app_settings_use_case.dart';
@@ -106,6 +107,7 @@ class CallBlockerApp extends StatelessWidget {
           '/permissions': (context) => const PermissionScreen(),
           '/privacy': (context) => const PrivacyPolicyScreen(),
           '/logs': (context) => const LogScreen(),
+          '/setup': (context) => const SetupScreen(),
         },
       ),
     );
