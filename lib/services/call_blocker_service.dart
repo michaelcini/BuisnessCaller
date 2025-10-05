@@ -1,7 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:telephony/telephony.dart';
 import '../domain/app_settings_use_case.dart';
-import '../models/app_settings.dart';
 
 class CallBlockerService {
   static const MethodChannel _channel = MethodChannel('call_blocker_service');
@@ -60,7 +59,6 @@ class CallBlockerService {
 
   Future<void> _handleIncomingCall(Map<dynamic, dynamic> arguments) async {
     final phoneNumber = arguments['phoneNumber'] as String?;
-    final timestamp = arguments['timestamp'] as int?;
     
     if (phoneNumber == null) return;
     
@@ -77,8 +75,6 @@ class CallBlockerService {
 
   Future<void> _handleSMSReceived(Map<dynamic, dynamic> arguments) async {
     final phoneNumber = arguments['phoneNumber'] as String?;
-    final messageBody = arguments['messageBody'] as String?;
-    final timestamp = arguments['timestamp'] as int?;
     
     if (phoneNumber == null) return;
     
@@ -108,10 +104,8 @@ class CallBlockerService {
       await _telephony.sendSms(
         to: phoneNumber,
         message: message,
-        statusCallback: (SendStatus status) {
-          print('SMS send status: $status');
-        },
       );
+      print('SMS sent successfully to $phoneNumber');
     } catch (e) {
       print('Error sending SMS: $e');
     }

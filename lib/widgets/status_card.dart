@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/app_settings.dart';
 
 class StatusCard extends StatelessWidget {
   final bool isEnabled;

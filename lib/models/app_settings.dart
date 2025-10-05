@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class AppSettings {
   final bool isEnabled;
   final Map<String, DaySchedule> weeklySchedule;
@@ -81,8 +79,8 @@ class AppSettings {
 
 class DaySchedule {
   final bool isEnabled;
-  final TimeOfDay startTime;
-  final TimeOfDay endTime;
+  final CustomTimeOfDay startTime;
+  final CustomTimeOfDay endTime;
 
   DaySchedule({
     required this.isEnabled,
@@ -93,8 +91,8 @@ class DaySchedule {
   factory DaySchedule.defaultSchedule() {
     return DaySchedule(
       isEnabled: true,
-      startTime: TimeOfDay(hour: 9, minute: 0),
-      endTime: TimeOfDay(hour: 17, minute: 0),
+      startTime: CustomTimeOfDay(hour: 9, minute: 0),
+      endTime: CustomTimeOfDay(hour: 17, minute: 0),
     );
   }
 
@@ -115,11 +113,11 @@ class DaySchedule {
   factory DaySchedule.fromJson(Map<String, dynamic> json) {
     return DaySchedule(
       isEnabled: json['isEnabled'] ?? true,
-      startTime: TimeOfDay(
+      startTime: CustomTimeOfDay(
         hour: json['startTime']['hour'] ?? 9,
         minute: json['startTime']['minute'] ?? 0,
       ),
-      endTime: TimeOfDay(
+      endTime: CustomTimeOfDay(
         hour: json['endTime']['hour'] ?? 17,
         minute: json['endTime']['minute'] ?? 0,
       ),
@@ -128,8 +126,8 @@ class DaySchedule {
 
   DaySchedule copyWith({
     bool? isEnabled,
-    TimeOfDay? startTime,
-    TimeOfDay? endTime,
+    CustomTimeOfDay? startTime,
+    CustomTimeOfDay? endTime,
   }) {
     return DaySchedule(
       isEnabled: isEnabled ?? this.isEnabled,
@@ -139,11 +137,11 @@ class DaySchedule {
   }
 }
 
-class TimeOfDay {
+class CustomTimeOfDay {
   final int hour;
   final int minute;
 
-  TimeOfDay({required this.hour, required this.minute});
+  CustomTimeOfDay({required this.hour, required this.minute});
 
   @override
   String toString() {
@@ -153,7 +151,7 @@ class TimeOfDay {
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is TimeOfDay && other.hour == hour && other.minute == minute;
+    return other is CustomTimeOfDay && other.hour == hour && other.minute == minute;
   }
 
   @override

@@ -16,7 +16,7 @@ class WeeklySchedule {
       return false;
     }
 
-    final currentTime = TimeOfDay.fromDateTime(now);
+    final currentTime = CustomTimeOfDay(hour: now.hour, minute: now.minute);
     return _isTimeInRange(currentTime, daySchedule.startTime, daySchedule.endTime);
   }
 
@@ -41,7 +41,7 @@ class WeeklySchedule {
     }
   }
 
-  bool _isTimeInRange(TimeOfDay current, TimeOfDay start, TimeOfDay end) {
+  bool _isTimeInRange(CustomTimeOfDay current, CustomTimeOfDay start, CustomTimeOfDay end) {
     final currentMinutes = current.hour * 60 + current.minute;
     final startMinutes = start.hour * 60 + start.minute;
     final endMinutes = end.hour * 60 + end.minute;

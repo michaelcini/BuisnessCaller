@@ -86,8 +86,8 @@ class DayScheduleTile extends StatelessWidget {
 
 class _TimePickerButton extends StatelessWidget {
   final String label;
-  final TimeOfDay time;
-  final Function(TimeOfDay) onTimeChanged;
+  final CustomTimeOfDay time;
+  final Function(CustomTimeOfDay) onTimeChanged;
 
   const _TimePickerButton({
     required this.label,
@@ -108,15 +108,15 @@ class _TimePickerButton extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         InkWell(
-          onTap: () async {
-            final TimeOfDay? pickedTime = await showTimePicker(
-              context: context,
-              initialTime: time,
-            );
-            if (pickedTime != null) {
-              onTimeChanged(pickedTime);
-            }
-          },
+        onTap: () async {
+          final TimeOfDay? pickedTime = await showTimePicker(
+            context: context,
+            initialTime: TimeOfDay(hour: time.hour, minute: time.minute),
+          );
+          if (pickedTime != null) {
+            onTimeChanged(CustomTimeOfDay(hour: pickedTime.hour, minute: pickedTime.minute));
+          }
+        },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(

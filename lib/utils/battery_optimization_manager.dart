@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'permission_manager.dart';
 
 class BatteryOptimizationManager {
   static const MethodChannel _channel = MethodChannel('call_blocker_service');
