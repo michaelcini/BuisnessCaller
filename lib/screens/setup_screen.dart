@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/call_blocker_service.dart';
 import '../services/log_service.dart';
 
@@ -10,14 +11,16 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  final CallBlockerService _callBlockerService = CallBlockerService();
-  final LogService _logService = LogService();
+  late CallBlockerService _callBlockerService;
+  late LogService _logService;
   bool _isCallScreeningEnabled = false;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _callBlockerService = context.read<CallBlockerService>();
+    _logService = context.read<LogService>();
     _checkCallScreeningStatus();
   }
 
