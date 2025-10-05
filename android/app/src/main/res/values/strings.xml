@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Call Blocker</string>
+    
+    <!-- Notification -->
+    <string name="notification_channel_name">Call Blocker Service</string>
+    <string name="notification_channel_description">Keeps Call Blocker running in the background</string>
+    <string name="notification_title">Call Blocker Active</string>
+    <string name="notification_text">Monitoring calls and SMS</string>
+    
+    <!-- Permissions -->
+    <string name="permission_phone_title">Phone Access</string>
+    <string name="permission_phone_description">Required to detect incoming calls and block them</string>
+    <string name="permission_sms_title">SMS Access</string>
+    <string name="permission_sms_description">Required to send automatic SMS replies</string>
+    <string name="permission_notification_title">Notifications</string>
+    <string name="permission_notification_description">Required to show foreground service notification</string>
+    <string name="permission_system_alert_title">System Alert Window</string>
+    <string name="permission_system_alert_description">Required for system-level call blocking</string>
+    
+    <!-- Battery Optimization -->
+    <string name="battery_optimization_title">Battery Optimization</string>
+    <string name="battery_optimization_description">To ensure Call Blocker works properly in the background, please exempt it from battery optimization.</string>
+    <string name="battery_optimization_button">Exempt from Battery Optimization</string>
+    
+    <!-- Error Messages -->
+    <string name="error_permission_denied">Permission denied. Please grant the required permissions in settings.</string>
+    <string name="error_service_start_failed">Failed to start background service.</string>
+    <string name="error_sms_send_failed">Failed to send SMS reply.</string>
+    <string name="error_call_block_failed">Failed to block call.</string>
+    
+    <!-- Success Messages -->
+    <string name="success_permissions_granted">All permissions granted!</string>
+    <string name="success_battery_optimization_granted">Battery optimization exemption granted!</string>
+    <string name="success_service_started">Background service started successfully.</string>
+    <string name="success_call_blocked">Call blocked successfully.</string>
+    <string name="success_sms_sent">SMS reply sent successfully.</string>
+</resources>
+

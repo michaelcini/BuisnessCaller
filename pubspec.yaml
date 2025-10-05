@@ -1,0 +1,49 @@
+name: call_blocker
+description: A complete Android application that automatically blocks calls and sends SMS replies outside of configured business hours.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  sqflite: ^2.3.0
+  
+  # Permissions
+  permission_handler: ^11.2.0
+  
+  # Phone & SMS
+  telephony: ^0.2.0
+  
+  # Background Services
+  flutter_background_service: ^5.0.5
+  
+  # UI Components
+  cupertino_icons: ^1.0.6
+  
+  # Utilities
+  intl: ^0.19.0
+  path_provider: ^2.1.2
+  url_launcher: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/
