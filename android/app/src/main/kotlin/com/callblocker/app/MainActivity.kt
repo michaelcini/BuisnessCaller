@@ -215,15 +215,15 @@ class MainActivity: FlutterActivity() {
             Log.i("MainActivity", "Is our app the default: $isDefault")
             
             if (isDefault) {
-                Log.i("MainActivity", "✅ Call screening is ENABLED - App is set as default")
+                Log.i("MainActivity", "Call screening is ENABLED - App is set as default")
             } else {
-                Log.w("MainActivity", "❌ Call screening is DISABLED - App is NOT set as default")
+                Log.w("MainActivity", "Call screening is DISABLED - App is NOT set as default")
                 Log.w("MainActivity", "User needs to go to Settings > Default Apps > Call Screening App")
             }
             
             isDefault
         } catch (e: Exception) {
-            Log.e("MainActivity", "❌ Error checking call screening status: ${e.message}")
+            Log.e("MainActivity", "Error checking call screening status: ${e.message}")
             e.printStackTrace()
             false
         }

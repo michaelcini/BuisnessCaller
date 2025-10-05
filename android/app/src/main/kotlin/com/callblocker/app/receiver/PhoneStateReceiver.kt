@@ -23,13 +23,13 @@ class PhoneStateReceiver : BroadcastReceiver() {
             val phoneNumber = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
             val timestamp = System.currentTimeMillis()
             
-            Log.i(TAG, "📞 Phone state changed: $state")
-            Log.i(TAG, "📞 Phone number: $phoneNumber")
-            Log.i(TAG, "📞 Timestamp: $timestamp")
+            Log.i(TAG, "Phone state changed: $state")
+            Log.i(TAG, "Phone number: $phoneNumber")
+            Log.i(TAG, "Timestamp: $timestamp")
             
             when (state) {
                 TelephonyManager.EXTRA_STATE_RINGING -> {
-                    Log.w(TAG, "🔔 INCOMING CALL from: $phoneNumber")
+                    Log.w(TAG, "INCOMING CALL from: $phoneNumber")
                     Log.d(TAG, "Notifying Flutter about incoming call")
                     
                     if (methodChannel != null) {
@@ -38,23 +38,23 @@ class PhoneStateReceiver : BroadcastReceiver() {
                                 "phoneNumber" to phoneNumber,
                                 "timestamp" to timestamp
                             ))
-                            Log.i(TAG, "✅ Successfully notified Flutter about incoming call")
+                            Log.i(TAG, "Successfully notified Flutter about incoming call")
                         } catch (e: Exception) {
-                            Log.e(TAG, "❌ Error notifying Flutter about incoming call: ${e.message}")
+                            Log.e(TAG, "Error notifying Flutter about incoming call: ${e.message}")
                             e.printStackTrace()
                         }
                     } else {
-                        Log.e(TAG, "❌ MethodChannel is null - cannot notify Flutter")
+                        Log.e(TAG, "MethodChannel is null - cannot notify Flutter")
                     }
                 }
                 TelephonyManager.EXTRA_STATE_OFFHOOK -> {
-                    Log.i(TAG, "📞 Call answered")
+                    Log.i(TAG, "Call answered")
                 }
                 TelephonyManager.EXTRA_STATE_IDLE -> {
-                    Log.i(TAG, "📞 Call ended")
+                    Log.i(TAG, "Call ended")
                 }
                 else -> {
-                    Log.d(TAG, "📞 Unknown phone state: $state")
+                    Log.d(TAG, "Unknown phone state: $state")
                 }
             }
         } else {

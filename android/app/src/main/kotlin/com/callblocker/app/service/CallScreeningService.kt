@@ -15,12 +15,12 @@ class CallScreeningService : CallScreeningService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.i(TAG, "🚀 CallScreeningService created - Service is active!")
+        Log.i(TAG, "CallScreeningService created - Service is active!")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(TAG, "💀 CallScreeningService destroyed")
+        Log.i(TAG, "CallScreeningService destroyed")
     }
 
     override fun onScreenCall(callDetails: Call.Details) {
@@ -36,7 +36,7 @@ class CallScreeningService : CallScreeningService() {
         val shouldBlock = shouldBlockCall(phoneNumber)
         
         if (shouldBlock) {
-            Log.w(TAG, "🚫 BLOCKING call from: $phoneNumber")
+            Log.w(TAG, "BLOCKING call from: $phoneNumber")
             Log.i(TAG, "Call will be rejected and logged")
             // Actually block the call
             respondToCall(callDetails, CallResponse.Builder()
@@ -46,7 +46,7 @@ class CallScreeningService : CallScreeningService() {
                 .build())
             Log.i(TAG, "Call blocking response sent")
         } else {
-            Log.i(TAG, "✅ ALLOWING call from: $phoneNumber")
+            Log.i(TAG, "ALLOWING call from: $phoneNumber")
             Log.i(TAG, "Call will be allowed to proceed")
             // Allow the call
             respondToCall(callDetails, CallResponse.Builder()
@@ -74,7 +74,7 @@ class CallScreeningService : CallScreeningService() {
             val isEnabled = prefs.getBoolean("isEnabled", false)
             Log.i(TAG, "App enabled: $isEnabled")
             if (!isEnabled) {
-                Log.i(TAG, "❌ App is disabled, allowing call")
+                Log.i(TAG, "App is disabled, allowing call")
                 return false
             }
             
@@ -82,7 +82,7 @@ class CallScreeningService : CallScreeningService() {
             val blockCalls = prefs.getBoolean("blockCalls", true)
             Log.i(TAG, "Call blocking enabled: $blockCalls")
             if (!blockCalls) {
-                Log.i(TAG, "❌ Call blocking is disabled, allowing call")
+                Log.i(TAG, "Call blocking is disabled, allowing call")
                 return false
             }
             
@@ -90,16 +90,16 @@ class CallScreeningService : CallScreeningService() {
             val isBusinessHours = isBusinessHours(prefs)
             Log.i(TAG, "Is business hours: $isBusinessHours")
             if (isBusinessHours) {
-                Log.i(TAG, "❌ Currently in business hours, allowing call")
+                Log.i(TAG, "Currently in business hours, allowing call")
                 return false
             }
             
-            Log.w(TAG, "🚫 Outside business hours, BLOCKING call from $phoneNumber")
+            Log.w(TAG, "Outside business hours, BLOCKING call from $phoneNumber")
             Log.i(TAG, "=== CALL WILL BE BLOCKED ===")
             return true
             
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error checking call blocking settings: ${e.message}")
+            Log.e(TAG, "Error checking call blocking settings: ${e.message}")
             e.printStackTrace()
             Log.i(TAG, "Allowing call due to error")
             return false
@@ -133,7 +133,7 @@ class CallScreeningService : CallScreeningService() {
         val dayEnabled = prefs.getBoolean("${dayName}_enabled", true)
         Log.i(TAG, "Day '$dayName' enabled: $dayEnabled")
         if (!dayEnabled) {
-            Log.i(TAG, "❌ Day is disabled, not business hours")
+            Log.i(TAG, "Day is disabled, not business hours")
             return false
         }
         
