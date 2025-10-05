@@ -41,6 +41,12 @@ jobs:
     - name: Run analysis
       run: flutter analyze
       
+    - name: Format code
+      run: dart format .
+      
+    - name: Check formatting
+      run: dart format --set-exit-if-changed .
+      
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:

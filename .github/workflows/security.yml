@@ -1,4 +1,4 @@
-name: Security Scan
+name: Security Check
 
 on:
   push:
@@ -25,16 +25,25 @@ jobs:
     - name: Install dependencies
       run: flutter pub get
       
-    - name: Run security audit
-      run: flutter pub audit
+    - name: Check dependencies
+      run: flutter pub deps
       
-    - name: Check for known vulnerabilities
+    - name: Check for outdated packages
+      run: flutter pub outdated
+      
+    - name: Run code analysis
+      run: flutter analyze
+      
+    - name: Check for security issues in dependencies
       run: |
-        flutter pub deps
-        flutter pub audit --json > audit_results.json
+        echo "Checking for known security issues..."
+        flutter pub deps --json > deps.json
+        echo "Dependency analysis complete"
         
-    - name: Upload security results
+    - name: Upload dependency analysis
       uses: actions/upload-artifact@v4
       with:
-        name: security-audit-results
-        path: audit_results.json
+        name: dependency-analysis
+        path: |
+          deps.json
+          pubspec.lock

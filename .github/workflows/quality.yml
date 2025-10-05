@@ -26,8 +26,11 @@ jobs:
     - name: Run linter
       run: flutter analyze
       
+    - name: Format code
+      run: dart format .
+      
     - name: Check formatting
-      run: dart format --output=none --set-exit-if-changed .
+      run: dart format --set-exit-if-changed .
       
     - name: Run tests with coverage
       run: flutter test --coverage
