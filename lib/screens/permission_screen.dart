@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'permission_manager.dart';
+import '../utils/permission_manager.dart';
 
 class PermissionScreen extends StatefulWidget {
   const PermissionScreen({super.key});
