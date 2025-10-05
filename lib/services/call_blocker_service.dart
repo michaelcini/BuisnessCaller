@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:telephony/telephony.dart';
 import '../domain/app_settings_use_case.dart';
 
 class CallBlockerService {
@@ -8,7 +7,6 @@ class CallBlockerService {
   static const MethodChannel _smsChannel = MethodChannel('sms_receiver');
   
   final AppSettingsUseCase _settingsUseCase;
-  final Telephony _telephony = Telephony.instance;
   
   bool _isServiceRunning = false;
   
@@ -101,10 +99,10 @@ class CallBlockerService {
 
   Future<void> _sendAutoReply(String phoneNumber, String message) async {
     try {
-      await _telephony.sendSms(
-        to: phoneNumber,
-        message: message,
-      );
+      await _channel.invokeMethod('sendSMS', {
+        'phoneNumber': phoneNumber,
+        'message': message,
+      });
       print('SMS sent successfully to $phoneNumber');
     } catch (e) {
       print('Error sending SMS: $e');

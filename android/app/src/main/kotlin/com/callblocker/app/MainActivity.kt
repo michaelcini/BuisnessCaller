@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.BatteryManager
 import android.os.PowerManager
 import android.provider.Settings
+import android.telephony.SmsManager
 import androidx.annotation.NonNull
 import com.callblocker.app.receiver.PhoneStateReceiver
 import com.callblocker.app.receiver.SMSReceiver
@@ -30,9 +31,10 @@ class MainActivity: FlutterActivity() {
                     stopCallBlockerService()
                     result.success(null)
                 }
-                "blockCall" -> {
+                "sendSMS" -> {
                     val phoneNumber = call.argument<String>("phoneNumber")
-                    blockCall(phoneNumber)
+                    val message = call.argument<String>("message")
+                    sendSMS(phoneNumber, message)
                     result.success(null)
                 }
                 "requestBatteryOptimization" -> {
@@ -68,10 +70,15 @@ class MainActivity: FlutterActivity() {
         startService(serviceIntent)
     }
 
-    private fun blockCall(phoneNumber: String?) {
-        // Note: Actual call blocking requires system-level permissions
-        // This is a placeholder for the blocking logic
-        // In a real implementation, you would use TelephonyManager or similar
+    private fun sendSMS(phoneNumber: String?, message: String?) {
+        if (phoneNumber != null && message != null) {
+            try {
+                val smsManager = SmsManager.getDefault()
+                smsManager.sendTextMessage(phoneNumber, null, message, null, null)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     private fun requestBatteryOptimization() {
