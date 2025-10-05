@@ -135,18 +135,31 @@ class MainActivity: FlutterActivity() {
 
     private fun requestCallScreeningPermission() {
         try {
+            // Open the default apps settings where user can set call screening app
             val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             startActivity(intent)
         } catch (e: Exception) {
             Log.e("MainActivity", "Error requesting call screening permission: ${e.message}")
+            // Fallback to general settings
+            try {
+                val fallbackIntent = Intent(Settings.ACTION_SETTINGS)
+                startActivity(fallbackIntent)
+            } catch (fallbackException: Exception) {
+                Log.e("MainActivity", "Error opening settings: ${fallbackException.message}")
+            }
         }
     }
 
     private fun isCallScreeningEnabled(): Boolean {
         return try {
-            val telecomManager = getSystemService(TELECOM_SERVICE) as android.telecom.TelecomManager
-            val defaultCallScreeningApp = telecomManager.defaultCallScreeningApp
-            defaultCallScreeningApp == packageName
+            // For Android 10+ (API 29+), we need to check if our CallScreeningService
+            // is properly registered and can be set as the default call screening app
+            val packageManager = packageManager
+            val serviceIntent = Intent("android.telecom.CallScreeningService")
+            serviceIntent.setPackage(packageName)
+            
+            val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+            resolveInfo != null
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking call screening status: ${e.message}")
             false
