@@ -222,5 +222,28 @@ class CallBlockerService {
   }
 
   bool get isServiceRunning => _isServiceRunning;
+
+  Future<void> testCallScreening() async {
+    print('🧪 CallBlockerService: Testing call screening setup...');
+    try {
+      await _channel.invokeMethod('testCallScreening');
+      print('✅ CallBlockerService: Call screening test completed');
+    } catch (e) {
+      print('❌ CallBlockerService: Call screening test failed: $e');
+    }
+  }
+
+  Future<void> testSMS(String phoneNumber, String message) async {
+    print('🧪 CallBlockerService: Testing SMS functionality...');
+    try {
+      await _channel.invokeMethod('testSMS', {
+        'phoneNumber': phoneNumber,
+        'message': message,
+      });
+      print('✅ CallBlockerService: SMS test completed');
+    } catch (e) {
+      print('❌ CallBlockerService: SMS test failed: $e');
+    }
+  }
 }
 

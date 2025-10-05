@@ -61,6 +61,16 @@ class MainActivity: FlutterActivity() {
                     val isEnabled = isCallScreeningEnabled()
                     result.success(isEnabled)
                 }
+                "testCallScreening" -> {
+                    testCallScreening()
+                    result.success(null)
+                }
+                "testSMS" -> {
+                    val phoneNumber = call.argument<String>("phoneNumber")
+                    val message = call.argument<String>("message")
+                    testSMS(phoneNumber, message)
+                    result.success(null)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -199,12 +209,66 @@ class MainActivity: FlutterActivity() {
             val defaultCallScreeningApp = telecomManager.defaultCallScreeningApp
             val isDefault = defaultCallScreeningApp == packageName
             
-            Log.d("MainActivity", "Default call screening app: $defaultCallScreeningApp, Our package: $packageName, Is default: $isDefault")
+            Log.i("MainActivity", "=== CALL SCREENING STATUS CHECK ===")
+            Log.i("MainActivity", "Default call screening app: $defaultCallScreeningApp")
+            Log.i("MainActivity", "Our package name: $packageName")
+            Log.i("MainActivity", "Is our app the default: $isDefault")
+            
+            if (isDefault) {
+                Log.i("MainActivity", "✅ Call screening is ENABLED - App is set as default")
+            } else {
+                Log.w("MainActivity", "❌ Call screening is DISABLED - App is NOT set as default")
+                Log.w("MainActivity", "User needs to go to Settings > Default Apps > Call Screening App")
+            }
             
             isDefault
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error checking call screening status: ${e.message}")
+            Log.e("MainActivity", "❌ Error checking call screening status: ${e.message}")
+            e.printStackTrace()
             false
+        }
+    }
+
+    private fun testCallScreening() {
+        Log.i("MainActivity", "=== TESTING CALL SCREENING ===")
+        Log.i("MainActivity", "Package name: $packageName")
+        
+        // Check if service is registered
+        val packageManager = packageManager
+        val serviceIntent = Intent("android.telecom.CallScreeningService")
+        serviceIntent.setPackage(packageName)
+        val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+        
+        Log.i("MainActivity", "CallScreeningService registered: ${resolveInfo != null}")
+        if (resolveInfo != null) {
+            Log.i("MainActivity", "Service info: ${resolveInfo.serviceInfo}")
+        }
+        
+        // Check if we're the default call screening app
+        val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+        val defaultApp = telecomManager.defaultCallScreeningApp
+        Log.i("MainActivity", "Default call screening app: $defaultApp")
+        Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+        
+        // Check permissions
+        val phonePermission = checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE)
+        val smsPermission = checkSelfPermission(android.Manifest.permission.SEND_SMS)
+        val receiveSmsPermission = checkSelfPermission(android.Manifest.permission.RECEIVE_SMS)
+        
+        Log.i("MainActivity", "READ_PHONE_STATE permission: $phonePermission")
+        Log.i("MainActivity", "SEND_SMS permission: $smsPermission")
+        Log.i("MainActivity", "RECEIVE_SMS permission: $receiveSmsPermission")
+    }
+
+    private fun testSMS(phoneNumber: String?, message: String?) {
+        Log.i("MainActivity", "=== TESTING SMS ===")
+        Log.i("MainActivity", "Phone number: $phoneNumber")
+        Log.i("MainActivity", "Message: $message")
+        
+        if (phoneNumber != null && message != null) {
+            sendSMS(phoneNumber, message)
+        } else {
+            Log.w("MainActivity", "Invalid SMS test parameters")
         }
     }
 }

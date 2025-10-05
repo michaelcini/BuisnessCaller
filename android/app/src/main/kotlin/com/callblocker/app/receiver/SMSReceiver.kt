@@ -18,6 +18,10 @@ class SMSReceiver : BroadcastReceiver() {
         var methodChannel: MethodChannel? = null
     }
 
+    init {
+        Log.i(TAG, "🚀 SMSReceiver initialized")
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(TAG, "=== SMS RECEIVER TRIGGERED ===")
         Log.d(TAG, "Action: ${intent.action}")

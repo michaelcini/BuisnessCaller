@@ -13,6 +13,16 @@ class CallScreeningService : CallScreeningService() {
         const val PREFS_NAME = "call_blocker_settings"
     }
 
+    override fun onCreate() {
+        super.onCreate()
+        Log.i(TAG, "🚀 CallScreeningService created - Service is active!")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.i(TAG, "💀 CallScreeningService destroyed")
+    }
+
     override fun onScreenCall(callDetails: Call.Details) {
         val phoneNumber = callDetails.handle?.schemeSpecificPart
         val callId = callDetails.callId
