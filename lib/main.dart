@@ -6,7 +6,9 @@ import 'screens/settings_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/permission_screen.dart';
 import 'screens/privacy_policy_screen.dart';
+import 'screens/log_screen.dart';
 import 'services/call_blocker_service.dart';
+import 'services/log_service.dart';
 import 'domain/app_settings_use_case.dart';
 import 'repositories/app_settings_repository.dart';
 import 'utils/permission_manager.dart';
@@ -40,6 +42,9 @@ class CallBlockerApp extends StatelessWidget {
           create: (context) => CallBlockerService(
             context.read<AppSettingsUseCase>(),
           ),
+        ),
+        Provider<LogService>(
+          create: (_) => LogService(),
         ),
       ],
       child: MaterialApp(
@@ -100,6 +105,7 @@ class CallBlockerApp extends StatelessWidget {
           '/about': (context) => const AboutScreen(),
           '/permissions': (context) => const PermissionScreen(),
           '/privacy': (context) => const PrivacyPolicyScreen(),
+          '/logs': (context) => const LogScreen(),
         },
       ),
     );
@@ -125,7 +131,13 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeServices();
     _checkPermissionsAndBatteryOptimization();
+  }
+
+  Future<void> _initializeServices() async {
+    final logService = context.read<LogService>();
+    await logService.initialize();
   }
 
   Future<void> _checkPermissionsAndBatteryOptimization() async {

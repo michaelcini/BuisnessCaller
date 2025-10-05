@@ -106,6 +106,21 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/logs');
+                            },
+                            icon: const Icon(Icons.list_alt),
+                            label: const Text('View Logs'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[100],
+                              foregroundColor: Colors.blue[800],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
