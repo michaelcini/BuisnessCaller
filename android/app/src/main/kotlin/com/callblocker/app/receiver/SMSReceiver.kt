@@ -18,48 +18,93 @@ class SMSReceiver : BroadcastReceiver() {
         var methodChannel: MethodChannel? = null
     }
 
+    init {
+        Log.i(TAG, "🚀 SMSReceiver initialized")
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
+        Log.d(TAG, "=== SMS RECEIVER TRIGGERED ===")
+        Log.d(TAG, "Action: ${intent.action}")
+        Log.d(TAG, "Intent extras: ${intent.extras}")
+        
         if (intent.action == Telephony.Sms.Intents.SMS_RECEIVED_ACTION) {
             val messages = Telephony.Sms.Intents.getMessagesFromIntent(intent)
+            Log.i(TAG, "📱 Processing ${messages.size} SMS message(s)")
             
-            for (message in messages) {
+            for ((index, message) in messages.withIndex()) {
                 val phoneNumber = message.originatingAddress
                 val messageBody = message.messageBody
                 val timestamp = message.timestampMillis
                 
-                Log.d(TAG, "SMS received from: $phoneNumber, Body: $messageBody")
+                Log.i(TAG, "📱 SMS #${index + 1} received from: $phoneNumber")
+                Log.d(TAG, "📱 SMS body: $messageBody")
+                Log.d(TAG, "📱 SMS timestamp: $timestamp")
                 
                 // Check if we should send auto-reply
-                if (shouldSendAutoReply(context)) {
+                val shouldReply = shouldSendAutoReply(context)
+                Log.i(TAG, "📱 Should send auto-reply: $shouldReply")
+                
+                if (shouldReply) {
+                    Log.i(TAG, "📱 Sending auto-reply to: $phoneNumber")
                     sendAutoReply(context, phoneNumber)
+                } else {
+                    Log.d(TAG, "📱 Not sending auto-reply (business hours or disabled)")
                 }
                 
-                methodChannel?.invokeMethod("onSMSReceived", mapOf(
-                    "phoneNumber" to phoneNumber,
-                    "messageBody" to messageBody,
-                    "timestamp" to timestamp
-                ))
+                // Notify Flutter
+                if (methodChannel != null) {
+                    try {
+                        methodChannel?.invokeMethod("onSMSReceived", mapOf(
+                            "phoneNumber" to phoneNumber,
+                            "messageBody" to messageBody,
+                            "timestamp" to timestamp
+                        ))
+                        Log.i(TAG, "✅ Successfully notified Flutter about SMS")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "❌ Error notifying Flutter about SMS: ${e.message}")
+                        e.printStackTrace()
+                    }
+                } else {
+                    Log.e(TAG, "❌ MethodChannel is null - cannot notify Flutter")
+                }
             }
+        } else {
+            Log.d(TAG, "Ignoring non-SMS intent: ${intent.action}")
         }
+        Log.d(TAG, "=== SMS RECEIVER COMPLETE ===")
     }
 
     private fun shouldSendAutoReply(context: Context): Boolean {
+        Log.d(TAG, "=== CHECKING SMS AUTO-REPLY ===")
         try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             
             // Check if app is enabled
             val isEnabled = prefs.getBoolean("isEnabled", false)
-            if (!isEnabled) return false
+            Log.i(TAG, "App enabled: $isEnabled")
+            if (!isEnabled) {
+                Log.i(TAG, "❌ App is disabled, not sending auto-reply")
+                return false
+            }
             
             // Check if SMS auto-reply is enabled
             val sendSMS = prefs.getBoolean("sendSMS", true)
-            if (!sendSMS) return false
+            Log.i(TAG, "SMS auto-reply enabled: $sendSMS")
+            if (!sendSMS) {
+                Log.i(TAG, "❌ SMS auto-reply is disabled")
+                return false
+            }
             
             // Check if current time is outside business hours
-            return !isBusinessHours(prefs)
+            val isBusinessHours = isBusinessHours(prefs)
+            val shouldReply = !isBusinessHours
+            Log.i(TAG, "Is business hours: $isBusinessHours")
+            Log.i(TAG, "Should send auto-reply: $shouldReply")
+            return shouldReply
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error checking SMS auto-reply settings: ${e.message}")
+            Log.e(TAG, "❌ Error checking SMS auto-reply settings: ${e.message}")
+            e.printStackTrace()
             return false
         }
     }
@@ -107,20 +152,31 @@ class SMSReceiver : BroadcastReceiver() {
     }
 
     private fun sendAutoReply(context: Context, phoneNumber: String?) {
-        if (phoneNumber == null) return
+        Log.d(TAG, "=== SENDING AUTO-REPLY ===")
+        Log.d(TAG, "Phone number: $phoneNumber")
+        
+        if (phoneNumber == null) {
+            Log.w(TAG, "❌ Phone number is null, cannot send auto-reply")
+            return
+        }
         
         try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val customMessage = prefs.getString("customMessage", 
                 "I am currently unavailable. Please call back during business hours.")
             
+            Log.i(TAG, "📱 Sending auto-reply to: $phoneNumber")
+            Log.d(TAG, "📱 Message: $customMessage")
+            
             val smsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(phoneNumber, null, customMessage, null, null)
             
-            Log.d(TAG, "Auto-reply sent to $phoneNumber: $customMessage")
+            Log.i(TAG, "✅ Auto-reply sent successfully to $phoneNumber")
+            Log.d(TAG, "=== AUTO-REPLY SENT ===")
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error sending auto-reply: ${e.message}")
+            Log.e(TAG, "❌ Error sending auto-reply to $phoneNumber: ${e.message}")
+            e.printStackTrace()
         }
     }
 }
