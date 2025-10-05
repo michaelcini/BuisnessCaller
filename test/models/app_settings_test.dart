@@ -60,19 +60,19 @@ void main() {
     });
   });
 
-  group('TimeOfDay Tests', () {
+  group('CustomTimeOfDay Tests', () {
     test('should format time correctly', () {
-      final time = TimeOfDay(hour: 9, minute: 30);
+      final time = CustomTimeOfDay(hour: 9, minute: 30);
       expect(time.toString(), '09:30');
       
-      final time2 = TimeOfDay(hour: 14, minute: 5);
+      final time2 = CustomTimeOfDay(hour: 14, minute: 5);
       expect(time2.toString(), '14:05');
     });
 
     test('should compare times correctly', () {
-      final time1 = TimeOfDay(hour: 9, minute: 30);
-      final time2 = TimeOfDay(hour: 9, minute: 30);
-      final time3 = TimeOfDay(hour: 10, minute: 30);
+      final time1 = CustomTimeOfDay(hour: 9, minute: 30);
+      final time2 = CustomTimeOfDay(hour: 9, minute: 30);
+      final time3 = CustomTimeOfDay(hour: 10, minute: 30);
       
       expect(time1, equals(time2));
       expect(time1, isNot(equals(time3)));
