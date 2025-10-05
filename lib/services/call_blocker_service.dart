@@ -20,55 +20,69 @@ class CallBlockerService {
   }
 
   Future<void> startService() async {
+    print('🔄 CallBlockerService: Starting service...');
     if (_isServiceRunning) {
+      print('⚠️ CallBlockerService: Service already running');
       await _logService.addWarning('Service already running');
       return;
     }
     
     try {
+      print('📡 CallBlockerService: Invoking native startService method');
       await _channel.invokeMethod('startService');
       _isServiceRunning = true;
+      print('✅ CallBlockerService: Service started successfully');
       await _logService.addSuccess('Call Blocker service started');
     } catch (e) {
+      print('❌ CallBlockerService: Failed to start service: $e');
       await _logService.addError('Failed to start service', details: e.toString());
-      print('Error starting service: $e');
     }
   }
 
   Future<void> stopService() async {
+    print('🔄 CallBlockerService: Stopping service...');
     if (!_isServiceRunning) {
+      print('⚠️ CallBlockerService: Service not running');
       await _logService.addWarning('Service not running');
       return;
     }
     
     try {
+      print('📡 CallBlockerService: Invoking native stopService method');
       await _channel.invokeMethod('stopService');
       _isServiceRunning = false;
+      print('✅ CallBlockerService: Service stopped successfully');
       await _logService.addSuccess('Call Blocker service stopped');
     } catch (e) {
+      print('❌ CallBlockerService: Failed to stop service: $e');
       await _logService.addError('Failed to stop service', details: e.toString());
-      print('Error stopping service: $e');
     }
   }
 
   Future<void> requestCallScreeningPermission() async {
+    print('🔄 CallBlockerService: Requesting call screening permission...');
     try {
+      print('📡 CallBlockerService: Invoking native requestCallScreeningPermission method');
       await _channel.invokeMethod('requestCallScreeningPermission');
+      print('✅ CallBlockerService: Call screening permission request sent');
       await _logService.addInfo('Requested call screening permission');
     } catch (e) {
+      print('❌ CallBlockerService: Failed to request call screening permission: $e');
       await _logService.addError('Failed to request call screening permission', details: e.toString());
-      print('Error requesting call screening permission: $e');
     }
   }
 
   Future<bool> isCallScreeningEnabled() async {
+    print('🔄 CallBlockerService: Checking call screening status...');
     try {
+      print('📡 CallBlockerService: Invoking native isCallScreeningEnabled method');
       final isEnabled = await _channel.invokeMethod('isCallScreeningEnabled') ?? false;
+      print('📊 CallBlockerService: Call screening enabled: $isEnabled');
       await _logService.addInfo('Call screening status checked', details: 'Enabled: $isEnabled');
       return isEnabled;
     } catch (e) {
+      print('❌ CallBlockerService: Failed to check call screening status: $e');
       await _logService.addError('Failed to check call screening status', details: e.toString());
-      print('Error checking call screening status: $e');
       return false;
     }
   }
@@ -90,32 +104,51 @@ class CallBlockerService {
   }
 
   Future<void> _handleIncomingCall(Map<dynamic, dynamic> arguments) async {
+    print('📞 CallBlockerService: Handling incoming call...');
     final phoneNumber = arguments['phoneNumber'] as String?;
+    final timestamp = arguments['timestamp'] as int?;
+    
+    print('📞 CallBlockerService: Phone number: $phoneNumber');
+    print('📞 CallBlockerService: Timestamp: $timestamp');
     
     if (phoneNumber == null) {
+      print('⚠️ CallBlockerService: Incoming call with no phone number');
       await _logService.addWarning('Incoming call with no phone number');
       return;
     }
     
+    print('📞 CallBlockerService: Processing call from: $phoneNumber');
     await _logService.addInfo('Incoming call detected', phoneNumber: phoneNumber);
     
+    print('📊 CallBlockerService: Loading settings...');
     final settings = await _settingsUseCase.getSettings();
     final weeklySchedule = await _settingsUseCase.getWeeklySchedule();
     
+    print('📊 CallBlockerService: App enabled: ${settings.isEnabled}');
+    print('📊 CallBlockerService: Call blocking enabled: ${settings.blockCalls}');
+    
     if (!settings.isEnabled) {
+      print('❌ CallBlockerService: App is disabled, allowing call');
       await _logService.addInfo('App is disabled, allowing call', phoneNumber: phoneNumber);
       return;
     }
     
     if (!settings.blockCalls) {
+      print('❌ CallBlockerService: Call blocking is disabled, allowing call');
       await _logService.addInfo('Call blocking is disabled, allowing call', phoneNumber: phoneNumber);
       return;
     }
     
-    if (weeklySchedule.shouldBlockCall()) {
+    print('🕐 CallBlockerService: Checking business hours...');
+    final shouldBlock = weeklySchedule.shouldBlockCall();
+    print('🕐 CallBlockerService: Should block call: $shouldBlock');
+    
+    if (shouldBlock) {
+      print('🚫 CallBlockerService: Outside business hours, attempting to block call');
       await _logService.addInfo('Outside business hours, attempting to block call', phoneNumber: phoneNumber);
       await _blockCall(phoneNumber);
     } else {
+      print('✅ CallBlockerService: Within business hours, allowing call');
       await _logService.addInfo('Within business hours, allowing call', phoneNumber: phoneNumber);
     }
   }

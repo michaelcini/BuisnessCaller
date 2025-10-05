@@ -73,38 +73,58 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun startCallBlockerService() {
+        Log.d("MainActivity", "Starting CallBlockerService...")
         val serviceIntent = Intent(this, CallBlockerService::class.java).apply {
             action = CallBlockerService.ACTION_START_SERVICE
         }
-        startForegroundService(serviceIntent)
+        try {
+            startForegroundService(serviceIntent)
+            Log.d("MainActivity", "CallBlockerService started successfully")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to start CallBlockerService: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     private fun stopCallBlockerService() {
+        Log.d("MainActivity", "Stopping CallBlockerService...")
         val serviceIntent = Intent(this, CallBlockerService::class.java).apply {
             action = CallBlockerService.ACTION_STOP_SERVICE
         }
-        startService(serviceIntent)
+        try {
+            startService(serviceIntent)
+            Log.d("MainActivity", "CallBlockerService stop request sent")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to stop CallBlockerService: ${e.message}")
+            e.printStackTrace()
+        }
     }
 
     private fun sendSMS(phoneNumber: String?, message: String?) {
+        Log.d("MainActivity", "sendSMS called - Phone: $phoneNumber, Message: $message")
         if (phoneNumber != null && message != null) {
             try {
+                Log.d("MainActivity", "Attempting to send SMS to $phoneNumber")
                 val smsManager = SmsManager.getDefault()
                 smsManager.sendTextMessage(phoneNumber, null, message, null, null)
-                Log.d("MainActivity", "SMS sent to $phoneNumber: $message")
+                Log.i("MainActivity", "SMS sent successfully to $phoneNumber: $message")
             } catch (e: Exception) {
-                Log.e("MainActivity", "Error sending SMS: ${e.message}")
+                Log.e("MainActivity", "Error sending SMS to $phoneNumber: ${e.message}")
                 e.printStackTrace()
             }
+        } else {
+            Log.w("MainActivity", "sendSMS called with null parameters - Phone: $phoneNumber, Message: $message")
         }
     }
 
     private fun blockCall(phoneNumber: String?) {
+        Log.d("MainActivity", "blockCall called - Phone: $phoneNumber")
         if (phoneNumber != null) {
             try {
                 // Note: Direct call blocking is not possible on Android 10+ due to security restrictions
                 // This is a placeholder for logging and notification purposes
-                Log.d("MainActivity", "Call blocked from: $phoneNumber")
+                Log.i("MainActivity", "Call blocking request for: $phoneNumber")
+                Log.d("MainActivity", "Note: Actual call blocking requires CallScreeningService to be set as default")
                 
                 // In a real implementation, you would need to:
                 // 1. Use AccessibilityService for call blocking (requires user setup)
@@ -115,37 +135,57 @@ class MainActivity: FlutterActivity() {
                 // The actual blocking would need to be implemented through other means
                 
             } catch (e: Exception) {
-                Log.e("MainActivity", "Error blocking call: ${e.message}")
+                Log.e("MainActivity", "Error in blockCall for $phoneNumber: ${e.message}")
                 e.printStackTrace()
             }
+        } else {
+            Log.w("MainActivity", "blockCall called with null phone number")
         }
     }
 
     private fun requestBatteryOptimization() {
-        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-            data = android.net.Uri.parse("package:$packageName")
+        Log.d("MainActivity", "Requesting battery optimization exemption for package: $packageName")
+        try {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = android.net.Uri.parse("package:$packageName")
+            }
+            startActivity(intent)
+            Log.d("MainActivity", "Battery optimization settings opened")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error opening battery optimization settings: ${e.message}")
+            e.printStackTrace()
         }
-        startActivity(intent)
     }
 
     private fun isBatteryOptimizationExempted(): Boolean {
-        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
-        return powerManager.isIgnoringBatteryOptimizations(packageName)
+        return try {
+            val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+            val isExempted = powerManager.isIgnoringBatteryOptimizations(packageName)
+            Log.d("MainActivity", "Battery optimization status for $packageName: $isExempted")
+            isExempted
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking battery optimization status: ${e.message}")
+            false
+        }
     }
 
     private fun requestCallScreeningPermission() {
+        Log.d("MainActivity", "Requesting call screening permission - opening default apps settings")
         try {
             // Open the default apps settings where user can set call screening app
             val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
             startActivity(intent)
+            Log.d("MainActivity", "Default apps settings opened successfully")
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error requesting call screening permission: ${e.message}")
+            Log.e("MainActivity", "Error opening default apps settings: ${e.message}")
             // Fallback to general settings
             try {
+                Log.d("MainActivity", "Falling back to general settings")
                 val fallbackIntent = Intent(Settings.ACTION_SETTINGS)
                 startActivity(fallbackIntent)
+                Log.d("MainActivity", "General settings opened as fallback")
             } catch (fallbackException: Exception) {
-                Log.e("MainActivity", "Error opening settings: ${fallbackException.message}")
+                Log.e("MainActivity", "Error opening fallback settings: ${fallbackException.message}")
             }
         }
     }
