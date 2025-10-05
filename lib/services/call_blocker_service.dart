@@ -39,6 +39,23 @@ class CallBlockerService {
     }
   }
 
+  Future<void> requestCallScreeningPermission() async {
+    try {
+      await _channel.invokeMethod('requestCallScreeningPermission');
+    } catch (e) {
+      print('Error requesting call screening permission: $e');
+    }
+  }
+
+  Future<bool> isCallScreeningEnabled() async {
+    try {
+      return await _channel.invokeMethod('isCallScreeningEnabled') ?? false;
+    } catch (e) {
+      print('Error checking call screening status: $e');
+      return false;
+    }
+  }
+
   Future<void> _handlePhoneStateCall(MethodCall call) async {
     switch (call.method) {
       case 'onIncomingCall':
@@ -88,10 +105,18 @@ class CallBlockerService {
   }
 
   Future<void> _blockCall(String phoneNumber) async {
-    // Note: Actual call blocking requires system-level permissions
-    // This is a placeholder for the blocking logic
     try {
+      // Log the blocked call for debugging
+      print('Attempting to block call from: $phoneNumber');
+      
+      // Call the native Android method
       await _channel.invokeMethod('blockCall', {'phoneNumber': phoneNumber});
+      
+      // Note: Actual call blocking on Android 10+ requires:
+      // 1. Call Screening Service (implemented above)
+      // 2. User to set the app as default call screening app
+      // 3. Proper permissions and Play Store compliance
+      
     } catch (e) {
       print('Error blocking call: $e');
     }

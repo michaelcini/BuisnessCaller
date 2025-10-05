@@ -21,6 +21,29 @@ class AppSettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     final settingsJson = json.encode(settings.toJson());
     await prefs.setString(_settingsKey, settingsJson);
+    
+    // Also save individual settings for Android service access
+    await _saveSettingsForAndroidService(prefs, settings);
+  }
+
+  Future<void> _saveSettingsForAndroidService(SharedPreferences prefs, AppSettings settings) async {
+    // Save main settings
+    await prefs.setBool('isEnabled', settings.isEnabled);
+    await prefs.setBool('blockCalls', settings.blockCalls);
+    await prefs.setBool('sendSMS', settings.sendSMS);
+    await prefs.setString('customMessage', settings.customMessage);
+    
+    // Save weekly schedule
+    for (final entry in settings.weeklySchedule.entries) {
+      final day = entry.key;
+      final schedule = entry.value;
+      
+      await prefs.setBool('${day}_enabled', schedule.isEnabled);
+      await prefs.setInt('${day}_startHour', schedule.startTime.hour);
+      await prefs.setInt('${day}_startMinute', schedule.startTime.minute);
+      await prefs.setInt('${day}_endHour', schedule.endTime.hour);
+      await prefs.setInt('${day}_endMinute', schedule.endTime.minute);
+    }
   }
 
   Future<void> updateSettings(AppSettings Function(AppSettings) updater) async {
