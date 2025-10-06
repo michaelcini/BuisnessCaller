@@ -235,40 +235,43 @@ class MainActivity: FlutterActivity() {
                 val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
                 // Try multiple methods to check if we're the default call screening app
                 try {
-                    // Method 1: Try direct property access
-                    val defaultApp = try {
-                        telecomManager.defaultCallScreeningApp
-                    } catch (e: Exception) {
-                        null
-                    }
+                    // Method 1: Use reflection (safest for all Android versions)
+                    var defaultApp: String? = null
                     
-                    if (defaultApp != null) {
+                    try {
+                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                        defaultApp = method.invoke(telecomManager) as String?
                         isDefault = defaultApp == packageName
                         Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
                         Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
-                    } else {
-                        // Method 2: Use reflection
+                    } catch (reflectionException: Exception) {
+                        Log.w("MainActivity", "Method 1 failed: ${reflectionException.message}")
+                        
+                        // Method 2: Check via Settings
                         try {
-                            val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                            val defaultAppReflection = method.invoke(telecomManager) as String?
-                            isDefault = defaultAppReflection == packageName
-                            Log.i("MainActivity", "Method 2 - Default call screening app: $defaultAppReflection")
+                            val settingsValue = android.provider.Settings.Secure.getString(
+                                contentResolver, 
+                                "call_screening_app"
+                            )
+                            defaultApp = settingsValue
+                            isDefault = settingsValue == packageName
+                            Log.i("MainActivity", "Method 2 - Settings call_screening_app: $settingsValue")
                             Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
-                        } catch (reflectionException: Exception) {
-                            Log.w("MainActivity", "Method 2 failed: ${reflectionException.message}")
+                        } catch (settingsException: Exception) {
+                            Log.w("MainActivity", "Method 2 failed: ${settingsException.message}")
                             
-                            // Method 3: Check via Settings
+                            // Method 3: Check via another settings key
                             try {
-                                val settingsValue = android.provider.Settings.Secure.getString(
+                                val settingsValue2 = android.provider.Settings.Secure.getString(
                                     contentResolver, 
-                                    "call_screening_app"
+                                    "default_call_screening_app"
                                 )
-                                isDefault = settingsValue == packageName
-                                Log.i("MainActivity", "Method 3 - Settings call_screening_app: $settingsValue")
+                                defaultApp = settingsValue2
+                                isDefault = settingsValue2 == packageName
+                                Log.i("MainActivity", "Method 3 - Settings default_call_screening_app: $settingsValue2")
                                 Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
-                            } catch (settingsException: Exception) {
-                                Log.w("MainActivity", "Method 3 failed: ${settingsException.message}")
-                                // If all methods fail, assume we're not default
+                            } catch (settingsException2: Exception) {
+                                Log.w("MainActivity", "Method 3 failed: ${settingsException2.message}")
                                 isDefault = false
                             }
                         }
@@ -526,40 +529,41 @@ class MainActivity: FlutterActivity() {
                 
                 // Try multiple methods to check if we're the default call screening app
                 try {
-                    // Method 1: Try direct property access
-                    defaultApp = try {
-                        telecomManager.defaultCallScreeningApp
-                    } catch (e: Exception) {
-                        null
-                    }
-                    
-                    if (defaultApp != null) {
+                    // Method 1: Use reflection (safest for all Android versions)
+                    try {
+                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                        defaultApp = method.invoke(telecomManager) as String?
                         isDefault = defaultApp == packageName
                         Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
                         Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
-                    } else {
-                        // Method 2: Use reflection
+                    } catch (reflectionException: Exception) {
+                        Log.w("MainActivity", "Method 1 failed: ${reflectionException.message}")
+                        
+                        // Method 2: Check via Settings
                         try {
-                            val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                            defaultApp = method.invoke(telecomManager) as String?
-                            isDefault = defaultApp == packageName
-                            Log.i("MainActivity", "Method 2 - Default call screening app: $defaultApp")
+                            val settingsValue = android.provider.Settings.Secure.getString(
+                                contentResolver, 
+                                "call_screening_app"
+                            )
+                            defaultApp = settingsValue
+                            isDefault = settingsValue == packageName
+                            Log.i("MainActivity", "Method 2 - Settings call_screening_app: $settingsValue")
                             Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
-                        } catch (reflectionException: Exception) {
-                            Log.w("MainActivity", "Method 2 failed: ${reflectionException.message}")
+                        } catch (settingsException: Exception) {
+                            Log.w("MainActivity", "Method 2 failed: ${settingsException.message}")
                             
-                            // Method 3: Check via Settings
+                            // Method 3: Check via another settings key
                             try {
-                                val settingsValue = android.provider.Settings.Secure.getString(
+                                val settingsValue2 = android.provider.Settings.Secure.getString(
                                     contentResolver, 
-                                    "call_screening_app"
+                                    "default_call_screening_app"
                                 )
-                                defaultApp = settingsValue
-                                isDefault = settingsValue == packageName
-                                Log.i("MainActivity", "Method 3 - Settings call_screening_app: $settingsValue")
+                                defaultApp = settingsValue2
+                                isDefault = settingsValue2 == packageName
+                                Log.i("MainActivity", "Method 3 - Settings default_call_screening_app: $settingsValue2")
                                 Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
-                            } catch (settingsException: Exception) {
-                                Log.w("MainActivity", "Method 3 failed: ${settingsException.message}")
+                            } catch (settingsException2: Exception) {
+                                Log.w("MainActivity", "Method 3 failed: ${settingsException2.message}")
                                 isDefault = false
                             }
                         }
