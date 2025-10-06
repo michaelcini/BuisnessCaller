@@ -307,5 +307,80 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  // DND Methods
+  Future<bool> enableDND() async {
+    print('🔕 CallBlockerService: Enabling DND...');
+    _superLogService?.addInfo('CallBlockerService', 'Enabling DND...');
+    try {
+      final result = await _channel.invokeMethod('enableDND');
+      print('✅ CallBlockerService: DND enabled: $result');
+      _superLogService?.addInfo('CallBlockerService', 'DND enabled: $result');
+      return result ?? false;
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to enable DND: $e');
+      _superLogService?.addError('CallBlockerService', 'Failed to enable DND', details: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> disableDND() async {
+    print('🔔 CallBlockerService: Disabling DND...');
+    _superLogService?.addInfo('CallBlockerService', 'Disabling DND...');
+    try {
+      final result = await _channel.invokeMethod('disableDND');
+      print('✅ CallBlockerService: DND disabled: $result');
+      _superLogService?.addInfo('CallBlockerService', 'DND disabled: $result');
+      return result ?? false;
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to disable DND: $e');
+      _superLogService?.addError('CallBlockerService', 'Failed to disable DND', details: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> isDNDEnabled() async {
+    try {
+      final result = await _channel.invokeMethod('isDNDEnabled');
+      return result ?? false;
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to check DND status: $e');
+      return false;
+    }
+  }
+
+  Future<bool> hasDNDPermission() async {
+    try {
+      final result = await _channel.invokeMethod('hasDNDPermission');
+      return result ?? false;
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to check DND permission: $e');
+      return false;
+    }
+  }
+
+  Future<String> getDNDStatus() async {
+    try {
+      final result = await _channel.invokeMethod('getDNDStatus');
+      return result ?? 'Unknown';
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to get DND status: $e');
+      return 'Error';
+    }
+  }
+
+  Future<void> testDND() async {
+    print('🧪 CallBlockerService: Testing DND functionality...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing DND functionality...');
+    try {
+      await _channel.invokeMethod('testDND');
+      print('✅ CallBlockerService: DND test completed');
+      _superLogService?.addInfo('CallBlockerService', 'DND test completed - check logs for details');
+    } catch (e) {
+      print('❌ CallBlockerService: DND test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'DND test failed', details: e.toString());
+      rethrow;
+    }
+  }
 }
 

@@ -13,6 +13,7 @@ import androidx.annotation.NonNull
 import com.callblocker.app.receiver.PhoneStateReceiver
 import com.callblocker.app.receiver.SMSReceiver
 import com.callblocker.app.service.CallBlockerService
+import com.callblocker.app.service.DNDService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -82,6 +83,30 @@ class MainActivity: FlutterActivity() {
                 }
                 "testCallScreeningWithFakeCall" -> {
                     testCallScreeningWithFakeCall()
+                    result.success(null)
+                }
+                "enableDND" -> {
+                    val success = enableDND()
+                    result.success(success)
+                }
+                "disableDND" -> {
+                    val success = disableDND()
+                    result.success(success)
+                }
+                "isDNDEnabled" -> {
+                    val isEnabled = isDNDEnabled()
+                    result.success(isEnabled)
+                }
+                "hasDNDPermission" -> {
+                    val hasPermission = hasDNDPermission()
+                    result.success(hasPermission)
+                }
+                "getDNDStatus" -> {
+                    val status = getDNDStatus()
+                    result.success(status)
+                }
+                "testDND" -> {
+                    testDND()
                     result.success(null)
                 }
                 else -> {
@@ -695,5 +720,63 @@ class MainActivity: FlutterActivity() {
         }
         
         Log.i("MainActivity", "=== FAKE CALL TEST COMPLETED ===")
+    }
+    
+    private fun enableDND(): Boolean {
+        Log.i("MainActivity", "Enabling DND...")
+        val dndService = DNDService(this)
+        return dndService.enableDND()
+    }
+    
+    private fun disableDND(): Boolean {
+        Log.i("MainActivity", "Disabling DND...")
+        val dndService = DNDService(this)
+        return dndService.disableDND()
+    }
+    
+    private fun isDNDEnabled(): Boolean {
+        val dndService = DNDService(this)
+        return dndService.isDNDEnabled()
+    }
+    
+    private fun hasDNDPermission(): Boolean {
+        val dndService = DNDService(this)
+        return dndService.hasDNDPermission()
+    }
+    
+    private fun getDNDStatus(): String {
+        val dndService = DNDService(this)
+        return dndService.getDNDStatus()
+    }
+    
+    private fun testDND() {
+        Log.i("MainActivity", "=== TESTING DND FUNCTIONALITY ===")
+        
+        val dndService = DNDService(this)
+        
+        Log.i("MainActivity", "DND supported: ${dndService.isDNDSupported()}")
+        Log.i("MainActivity", "DND permission: ${dndService.hasDNDPermission()}")
+        Log.i("MainActivity", "DND enabled: ${dndService.isDNDEnabled()}")
+        Log.i("MainActivity", "DND status: ${dndService.getDNDStatus()}")
+        Log.i("MainActivity", "Should enable DND: ${dndService.shouldEnableDND()}")
+        
+        // Test enabling DND
+        if (dndService.hasDNDPermission()) {
+            Log.i("MainActivity", "Testing DND enable...")
+            val enableResult = dndService.enableDND()
+            Log.i("MainActivity", "DND enable result: $enableResult")
+            
+            // Wait a moment then disable
+            Thread.sleep(2000)
+            
+            Log.i("MainActivity", "Testing DND disable...")
+            val disableResult = dndService.disableDND()
+            Log.i("MainActivity", "DND disable result: $disableResult")
+        } else {
+            Log.w("MainActivity", "DND permission not granted - cannot test DND functionality")
+            Log.w("MainActivity", "User needs to grant notification policy access")
+        }
+        
+        Log.i("MainActivity", "=== DND TEST COMPLETED ===")
     }
 }

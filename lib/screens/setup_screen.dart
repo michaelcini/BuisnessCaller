@@ -228,23 +228,23 @@ class _SetupScreenState extends State<SetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Call Screening Setup Guide',
+                      'Call Blocking Setup Guide',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'For call screening to work, you MUST complete these steps:',
+                      'This app now uses Do Not Disturb (DND) mode for call blocking:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text('1. Grant all permissions when prompted'),
-                    const Text('2. Tap "Call Screening Settings" button below'),
-                    const Text('3. In Android Settings, find "Call Screening App"'),
-                    const Text('4. Select this app as the default call screening app'),
-                    const Text('5. Enable the app in the app settings'),
+                    const Text('2. Grant "Do Not Disturb" permission when prompted'),
+                    const Text('3. The app will automatically enable DND during non-business hours'),
+                    const Text('4. DND blocks calls, notifications, and alerts'),
+                    const Text('5. SMS auto-reply will still work when DND is active'),
                     const SizedBox(height: 8),
                     const Text(
-                      'If calls are still not being screened, use the debug tools below to check what\'s wrong.',
+                      'DND approach works on all Android devices (6.0+) and is more reliable than call screening.',
                       style: TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],
@@ -351,6 +351,75 @@ class _SetupScreenState extends State<SetupScreen> {
                           foregroundColor: Colors.white,
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    // DND Test buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Test DND button pressed');
+                              try {
+                                await _callBlockerService.testDND();
+                                _superLogService.addInfo('SetupScreen', 'Test DND completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('DND test completed - check Super Log for details'),
+                                    backgroundColor: Colors.indigo,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test DND failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Test failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.do_not_disturb),
+                            label: const Text('Test DND'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Enable DND button pressed');
+                              try {
+                                final result = await _callBlockerService.enableDND();
+                                _superLogService.addInfo('SetupScreen', 'DND enabled: $result');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('DND ${result ? 'enabled' : 'failed'}'),
+                                    backgroundColor: result ? Colors.green : Colors.red,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Enable DND failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Enable failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.do_not_disturb_on),
+                            label: const Text('Enable DND'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Row(
