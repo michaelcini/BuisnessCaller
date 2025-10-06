@@ -76,6 +76,10 @@ class MainActivity: FlutterActivity() {
                     openCallScreeningSettings()
                     result.success(null)
                 }
+                "testCallScreeningService" -> {
+                    testCallScreeningService()
+                    result.success(null)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -407,5 +411,69 @@ class MainActivity: FlutterActivity() {
                 Log.e("MainActivity", "Error opening fallback settings: ${fallbackException.message}")
             }
         }
+    }
+    
+    private fun testCallScreeningService() {
+        Log.i("MainActivity", "=== TESTING CALL SCREENING SERVICE ACTIVATION ===")
+        
+        // Check if service is registered
+        val packageManager = packageManager
+        val serviceIntent = Intent("android.telecom.CallScreeningService")
+        serviceIntent.setPackage(packageName)
+        val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+        
+        Log.i("MainActivity", "Service registered: ${resolveInfo != null}")
+        
+        if (resolveInfo != null) {
+            Log.i("MainActivity", "Service is REGISTERED - this is good!")
+            Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
+            Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
+            
+            // Check if we can start the service
+            try {
+                val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
+                Log.i("MainActivity", "Attempting to start CallScreeningService for testing...")
+                startService(serviceStartIntent)
+                Log.i("MainActivity", "CallScreeningService started successfully")
+                Log.i("MainActivity", "Check logs for 'CALL SCREENING SERVICE CREATED' message")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to start CallScreeningService: ${e.message}")
+            }
+        } else {
+            Log.e("MainActivity", "Service is NOT REGISTERED - this is the problem!")
+            Log.e("MainActivity", "The CallScreeningService is not properly registered in AndroidManifest.xml")
+        }
+        
+        // Check if we're the default call screening app
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+                try {
+                    val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                    val defaultApp = method.invoke(telecomManager) as String?
+                    Log.i("MainActivity", "Default call screening app: $defaultApp")
+                    Log.i("MainActivity", "Our package: $packageName")
+                    Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+                    
+                    if (defaultApp == packageName) {
+                        Log.i("MainActivity", "✅ WE ARE THE DEFAULT CALL SCREENING APP!")
+                        Log.i("MainActivity", "Calls should be screened by our service")
+                    } else {
+                        Log.w("MainActivity", "❌ WE ARE NOT THE DEFAULT CALL SCREENING APP")
+                        Log.w("MainActivity", "User must set this app as default in Settings")
+                        Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+                    }
+                } catch (reflectionException: Exception) {
+                    Log.w("MainActivity", "Could not check default app via reflection: ${reflectionException.message}")
+                }
+            } else {
+                Log.i("MainActivity", "Android version < 10, default call screening not available")
+                Log.i("MainActivity", "Service registration is sufficient for older versions")
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking call screening status: ${e.message}")
+        }
+        
+        Log.i("MainActivity", "=== CALL SCREENING SERVICE TEST COMPLETED ===")
     }
 }

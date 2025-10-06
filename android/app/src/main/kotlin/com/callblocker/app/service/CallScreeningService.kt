@@ -15,7 +15,10 @@ class CallScreeningService : CallScreeningService() {
 
     override fun onCreate() {
         super.onCreate()
-        Log.i(TAG, "CallScreeningService created - Service is active!")
+        Log.i(TAG, "=== CALL SCREENING SERVICE CREATED ===")
+        Log.i(TAG, "Service is active and ready to screen calls!")
+        Log.i(TAG, "This means the service is registered and can be set as default")
+        Log.i(TAG, "=== SERVICE READY ===")
     }
 
     override fun onDestroy() {

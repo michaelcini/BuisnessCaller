@@ -279,5 +279,19 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  Future<void> testCallScreeningService() async {
+    print('🔍 CallBlockerService: Testing CallScreeningService activation...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing CallScreeningService activation...');
+    try {
+      await _channel.invokeMethod('testCallScreeningService');
+      print('✅ CallBlockerService: CallScreeningService test completed');
+      _superLogService?.addInfo('CallBlockerService', 'CallScreeningService test completed - check logs for details');
+    } catch (e) {
+      print('❌ CallBlockerService: CallScreeningService test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'CallScreeningService test failed', details: e.toString());
+      rethrow;
+    }
+  }
 }
 

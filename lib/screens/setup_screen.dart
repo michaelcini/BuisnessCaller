@@ -228,6 +228,37 @@ class _SetupScreenState extends State<SetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
+                      'Call Screening Setup Guide',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'For call screening to work, you MUST complete these steps:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text('1. Grant all permissions when prompted'),
+                    const Text('2. Tap "Call Screening Settings" button below'),
+                    const Text('3. In Android Settings, find "Call Screening App"'),
+                    const Text('4. Select this app as the default call screening app'),
+                    const Text('5. Enable the app in the app settings'),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'If calls are still not being screened, use the debug tools below to check what\'s wrong.',
+                      style: TextStyle(fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
                       'Debug Tools',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
@@ -249,6 +280,40 @@ class _SetupScreenState extends State<SetupScreen> {
                         label: const Text('Test SuperLog (Add Test Entry)'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // Test CallScreeningService button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          _superLogService.addInfo('SetupScreen', 'Test CallScreeningService button pressed');
+                          try {
+                            await _callBlockerService.testCallScreeningService();
+                            _superLogService.addInfo('SetupScreen', 'Test CallScreeningService completed');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('CallScreeningService test completed - check Super Log for details'),
+                                backgroundColor: Colors.cyan,
+                              ),
+                            );
+                          } catch (e) {
+                            _superLogService.addError('SetupScreen', 'Test CallScreeningService failed', details: e.toString());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Test failed: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.phone_callback),
+                        label: const Text('Test CallScreeningService'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.cyan,
                           foregroundColor: Colors.white,
                         ),
                       ),
