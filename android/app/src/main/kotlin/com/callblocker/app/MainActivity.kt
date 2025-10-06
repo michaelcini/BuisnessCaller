@@ -25,7 +25,8 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        val methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "startService" -> {
                     startCallBlockerService()
@@ -77,8 +78,8 @@ class MainActivity: FlutterActivity() {
                     result.success(null)
                 }
                 "testCallScreeningService" -> {
-                    testCallScreeningService()
-                    result.success(null)
+                    val testResults = testCallScreeningServiceWithResults()
+                    result.success(testResults)
                 }
                 "testCallScreeningWithFakeCall" -> {
                     testCallScreeningWithFakeCall()
@@ -564,7 +565,8 @@ class MainActivity: FlutterActivity() {
         serviceIntent.setPackage(packageName)
         val resolveInfo = packageManager.resolveService(serviceIntent, 0)
         
-        Log.i("MainActivity", "Service registered: ${resolveInfo != null}")
+        val serviceRegistered = resolveInfo != null
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
         
         if (resolveInfo != null) {
             Log.i("MainActivity", "✅ Service is REGISTERED - this is good!")
@@ -593,7 +595,7 @@ class MainActivity: FlutterActivity() {
         val isDefault = checkIfDefaultCallScreeningApp()
         
         Log.i("MainActivity", "=== FINAL STATUS ===")
-        Log.i("MainActivity", "Service registered: ${resolveInfo != null}")
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
         Log.i("MainActivity", "Is default app: $isDefault")
         
         if (resolveInfo != null && isDefault) {
@@ -607,6 +609,94 @@ class MainActivity: FlutterActivity() {
         }
         
         Log.i("MainActivity", "=== CALL SCREENING SERVICE TEST COMPLETED ===")
+    }
+    
+    private fun testCallScreeningServiceWithResults(): Map<String, Any> {
+        val results = mutableMapOf<String, Any>()
+        
+        Log.i("MainActivity", "=== TESTING CALL SCREENING SERVICE ACTIVATION ===")
+        Log.i("MainActivity", "Package: $packageName")
+        Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
+        
+        results["packageName"] = packageName
+        results["androidVersion"] = android.os.Build.VERSION.SDK_INT
+        
+        // Check if service is registered
+        val packageManager = packageManager
+        val serviceIntent = Intent("android.telecom.CallScreeningService")
+        serviceIntent.setPackage(packageName)
+        val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+        
+        val serviceRegistered = resolveInfo != null
+        results["serviceRegistered"] = serviceRegistered
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
+        
+        if (resolveInfo != null) {
+            results["serviceEnabled"] = resolveInfo.serviceInfo.enabled
+            results["serviceExported"] = resolveInfo.serviceInfo.exported
+            results["serviceName"] = resolveInfo.serviceInfo.name
+            results["servicePackage"] = resolveInfo.serviceInfo.packageName
+            
+            Log.i("MainActivity", "✅ Service is REGISTERED - this is good!")
+            Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
+            Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
+            Log.i("MainActivity", "Service name: ${resolveInfo.serviceInfo.name}")
+            Log.i("MainActivity", "Service package: ${resolveInfo.serviceInfo.packageName}")
+            
+            // Check if we can start the service
+            try {
+                val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
+                Log.i("MainActivity", "Attempting to start CallScreeningService for testing...")
+                startService(serviceStartIntent)
+                results["serviceStartSuccess"] = true
+                Log.i("MainActivity", "✅ CallScreeningService started successfully")
+                Log.i("MainActivity", "Check logs for 'CALL SCREENING SERVICE CREATED' message")
+            } catch (e: Exception) {
+                results["serviceStartSuccess"] = false
+                results["serviceStartError"] = e.message ?: "Unknown error"
+                Log.e("MainActivity", "❌ Failed to start CallScreeningService: ${e.message}")
+            }
+        } else {
+            results["serviceEnabled"] = false
+            results["serviceExported"] = false
+            results["serviceName"] = "Not registered"
+            results["servicePackage"] = "Not registered"
+            results["serviceStartSuccess"] = false
+            results["serviceStartError"] = "Service not registered"
+            
+            Log.e("MainActivity", "❌ Service is NOT REGISTERED - this is the problem!")
+            Log.e("MainActivity", "The CallScreeningService is not properly registered in AndroidManifest.xml")
+            Log.e("MainActivity", "Check that the service is declared with the correct intent-filter")
+        }
+        
+        // Check if we're the default call screening app
+        val isDefault = checkIfDefaultCallScreeningApp()
+        results["isDefaultApp"] = isDefault
+        
+        Log.i("MainActivity", "=== FINAL STATUS ===")
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
+        Log.i("MainActivity", "Is default app: $isDefault")
+        
+        val finalStatus = when {
+            resolveInfo != null && isDefault -> "WORKING"
+            resolveInfo != null && !isDefault -> "NOT_DEFAULT"
+            resolveInfo == null -> "NOT_REGISTERED"
+            else -> "UNKNOWN"
+        }
+        results["finalStatus"] = finalStatus
+        
+        if (resolveInfo != null && isDefault) {
+            Log.i("MainActivity", "🎉 EVERYTHING IS WORKING! Call screening should work!")
+        } else if (resolveInfo != null && !isDefault) {
+            Log.w("MainActivity", "⚠️ Service is registered but NOT set as default")
+            Log.w("MainActivity", "User must set this app as default call screening app")
+            Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+        } else if (resolveInfo == null) {
+            Log.e("MainActivity", "❌ Service is not registered - fix AndroidManifest.xml")
+        }
+        
+        Log.i("MainActivity", "=== CALL SCREENING SERVICE TEST COMPLETED ===")
+        return results
     }
     
     private fun testCallScreeningWithFakeCall() {
