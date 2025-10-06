@@ -284,7 +284,10 @@ class CallBlockerService {
     print('🔍 CallBlockerService: Testing CallScreeningService activation...');
     _superLogService?.addInfo('CallBlockerService', 'Testing CallScreeningService activation...');
     try {
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreeningService method...');
       final results = await _channel.invokeMethod('testCallScreeningService') as Map<dynamic, dynamic>?;
+      
+      _superLogService?.addInfo('CallBlockerService', 'Received results from native: $results');
       
       if (results != null) {
         _superLogService?.addInfo('CallBlockerService', '=== CALL SCREENING SERVICE TEST RESULTS ===');
@@ -320,6 +323,8 @@ class CallBlockerService {
         }
         
         _superLogService?.addInfo('CallBlockerService', '=== TEST RESULTS COMPLETED ===');
+      } else {
+        _superLogService?.addWarning('CallBlockerService', 'No results received from native method');
       }
       
       print('✅ CallBlockerService: CallScreeningService test completed');
@@ -334,6 +339,7 @@ class CallBlockerService {
     print('📞 CallBlockerService: Testing call screening with fake call...');
     _superLogService?.addInfo('CallBlockerService', 'Testing call screening with fake call...');
     try {
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreeningWithFakeCall method...');
       await _channel.invokeMethod('testCallScreeningWithFakeCall');
       print('✅ CallBlockerService: Fake call test completed');
       _superLogService?.addInfo('CallBlockerService', 'Fake call test completed - check logs for service creation');

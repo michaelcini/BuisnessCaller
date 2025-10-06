@@ -541,13 +541,20 @@ class _SetupScreenState extends State<SetupScreen> {
                         onPressed: () async {
                           _superLogService.addInfo('SetupScreen', 'Running comprehensive diagnostic test...');
                           try {
-                            // Run all tests in sequence
+                            _superLogService.addInfo('SetupScreen', 'Step 1: Testing CallScreeningService...');
                             await _callBlockerService.testCallScreeningService();
+                            
                             await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 2: Testing CallScreeningService with fake call...');
                             await _callBlockerService.testCallScreeningWithFakeCall();
+                            
                             await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 3: Testing call screening detection...');
                             await _callBlockerService.testCallScreening();
+                            
                             await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 4: Testing SMS functionality...');
+                            await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
                             
                             _superLogService.addInfo('SetupScreen', 'Comprehensive diagnostic test completed');
                             ScaffoldMessenger.of(context).showSnackBar(
