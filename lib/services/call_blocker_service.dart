@@ -237,34 +237,46 @@ class CallBlockerService {
 
   Future<void> testCallScreening() async {
     print('🧪 CallBlockerService: Testing call screening setup...');
+    _superLogService?.addInfo('CallBlockerService', 'Starting call screening test...');
     try {
       await _channel.invokeMethod('testCallScreening');
       print('✅ CallBlockerService: Call screening test completed');
+      _superLogService?.addInfo('CallBlockerService', 'Call screening test completed successfully');
     } catch (e) {
       print('❌ CallBlockerService: Call screening test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'Call screening test failed', details: e.toString());
+      rethrow;
     }
   }
 
   Future<void> testSMS(String phoneNumber, String message) async {
     print('🧪 CallBlockerService: Testing SMS functionality...');
+    _superLogService?.addInfo('CallBlockerService', 'Starting SMS test...');
     try {
       await _channel.invokeMethod('testSMS', {
         'phoneNumber': phoneNumber,
         'message': message,
       });
       print('✅ CallBlockerService: SMS test completed');
+      _superLogService?.addInfo('CallBlockerService', 'SMS test completed successfully');
     } catch (e) {
       print('❌ CallBlockerService: SMS test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'SMS test failed', details: e.toString());
+      rethrow;
     }
   }
 
   Future<void> openCallScreeningSettings() async {
     print('⚙️ CallBlockerService: Opening call screening settings...');
+    _superLogService?.addInfo('CallBlockerService', 'Opening call screening settings...');
     try {
       await _channel.invokeMethod('openCallScreeningSettings');
       print('✅ CallBlockerService: Call screening settings opened');
+      _superLogService?.addInfo('CallBlockerService', 'Call screening settings opened successfully');
     } catch (e) {
       print('❌ CallBlockerService: Failed to open call screening settings: $e');
+      _superLogService?.addError('CallBlockerService', 'Failed to open call screening settings', details: e.toString());
+      rethrow;
     }
   }
 }

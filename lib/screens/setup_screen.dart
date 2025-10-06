@@ -232,12 +232,52 @@ class _SetupScreenState extends State<SetupScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
+                    // Test SuperLog button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          _superLogService.addInfo('SetupScreen', 'SuperLog test button pressed at ${DateTime.now()}');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Test log added - check Super Log'),
+                              backgroundColor: Colors.purple,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.bug_report_outlined),
+                        label: const Text('Test SuperLog (Add Test Entry)'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              await _callBlockerService.testCallScreening();
+                              _superLogService.addInfo('SetupScreen', 'Test Call Screening button pressed');
+                              try {
+                                await _callBlockerService.testCallScreening();
+                                _superLogService.addInfo('SetupScreen', 'Test Call Screening completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Call Screening test completed - check Super Log for details'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test Call Screening failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Test failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             icon: const Icon(Icons.bug_report),
                             label: const Text('Test Call Screening'),
@@ -251,7 +291,25 @@ class _SetupScreenState extends State<SetupScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
-                              await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
+                              _superLogService.addInfo('SetupScreen', 'Test SMS button pressed');
+                              try {
+                                await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
+                                _superLogService.addInfo('SetupScreen', 'Test SMS completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('SMS test completed - check Super Log for details'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test SMS failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Test failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             icon: const Icon(Icons.sms),
                             label: const Text('Test SMS'),
@@ -283,7 +341,25 @@ class _SetupScreenState extends State<SetupScreen> {
                      Expanded(
                        child: ElevatedButton.icon(
                          onPressed: () async {
-                           await _callBlockerService.openCallScreeningSettings();
+                           _superLogService.addInfo('SetupScreen', 'Call Screening Settings button pressed');
+                           try {
+                             await _callBlockerService.openCallScreeningSettings();
+                             _superLogService.addInfo('SetupScreen', 'Call Screening Settings opened');
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               const SnackBar(
+                                 content: Text('Settings opened - set this app as default call screening app'),
+                                 backgroundColor: Colors.blue,
+                               ),
+                             );
+                           } catch (e) {
+                             _superLogService.addError('SetupScreen', 'Failed to open settings', details: e.toString());
+                             ScaffoldMessenger.of(context).showSnackBar(
+                               SnackBar(
+                                 content: Text('Failed to open settings: $e'),
+                                 backgroundColor: Colors.red,
+                               ),
+                             );
+                           }
                          },
                          icon: const Icon(Icons.settings),
                          label: const Text('Call Screening Settings'),
