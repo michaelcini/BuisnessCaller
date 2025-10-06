@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/call_blocker_service.dart';
 import '../services/log_service.dart';
+import '../services/super_log_service.dart';
 
 class SetupScreen extends StatefulWidget {
   const SetupScreen({Key? key}) : super(key: key);
@@ -13,6 +14,7 @@ class SetupScreen extends StatefulWidget {
 class _SetupScreenState extends State<SetupScreen> {
   late CallBlockerService _callBlockerService;
   late LogService _logService;
+  late SuperLogService _superLogService;
   bool _isCallScreeningEnabled = false;
   bool _isLoading = false;
 
@@ -21,6 +23,7 @@ class _SetupScreenState extends State<SetupScreen> {
     super.initState();
     _callBlockerService = context.read<CallBlockerService>();
     _logService = context.read<LogService>();
+    _superLogService = context.read<SuperLogService>();
     _checkCallScreeningStatus();
   }
 
@@ -253,6 +256,21 @@ class _SetupScreenState extends State<SetupScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/superlog');
+                        },
+                        icon: const Icon(Icons.analytics),
+                        label: const Text('Open Super Log'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Text(

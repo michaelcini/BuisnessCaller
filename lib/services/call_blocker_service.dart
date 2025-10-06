@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import '../domain/app_settings_use_case.dart';
 import '../services/log_service.dart';
+import '../services/super_log_service.dart';
 
 class CallBlockerService {
   static const MethodChannel _channel = MethodChannel('call_blocker_service');
@@ -9,10 +10,15 @@ class CallBlockerService {
   
   final AppSettingsUseCase _settingsUseCase;
   final LogService _logService = LogService();
+  SuperLogService? _superLogService;
   
   bool _isServiceRunning = false;
   
   CallBlockerService(this._settingsUseCase);
+
+  void setSuperLogService(SuperLogService superLogService) {
+    _superLogService = superLogService;
+  }
 
   Future<void> initialize() async {
     _phoneChannel.setMethodCallHandler(_handlePhoneStateCall);
@@ -21,20 +27,26 @@ class CallBlockerService {
 
   Future<void> startService() async {
     print('🔄 CallBlockerService: Starting service...');
+    _superLogService?.addInfo('CallBlockerService', 'Starting service...');
+    
     if (_isServiceRunning) {
       print('⚠️ CallBlockerService: Service already running');
+      _superLogService?.addWarning('CallBlockerService', 'Service already running');
       await _logService.addWarning('Service already running');
       return;
     }
     
     try {
       print('📡 CallBlockerService: Invoking native startService method');
+      _superLogService?.addDebug('CallBlockerService', 'Invoking native startService method');
       await _channel.invokeMethod('startService');
       _isServiceRunning = true;
       print('✅ CallBlockerService: Service started successfully');
+      _superLogService?.addInfo('CallBlockerService', 'Service started successfully');
       await _logService.addSuccess('Call Blocker service started');
     } catch (e) {
       print('❌ CallBlockerService: Failed to start service: $e');
+      _superLogService?.addError('CallBlockerService', 'Failed to start service', details: e.toString());
       await _logService.addError('Failed to start service', details: e.toString());
     }
   }
