@@ -95,11 +95,18 @@ class SMSReceiver : BroadcastReceiver() {
                 return false
             }
             
-            // Check if current time is outside business hours
+            // Check if current time is outside business hours (send auto-reply when NOT in business hours)
             val isBusinessHours = isBusinessHours(prefs)
             val shouldReply = !isBusinessHours
             Log.i(TAG, "Is business hours: $isBusinessHours")
-            Log.i(TAG, "Should send auto-reply: $shouldReply")
+            Log.i(TAG, "Should send auto-reply (outside business hours): $shouldReply")
+            
+            // For testing purposes, let's also log the current time
+            val calendar = Calendar.getInstance()
+            val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+            val currentMinute = calendar.get(Calendar.MINUTE)
+            Log.i(TAG, "Current time: ${String.format("%02d:%02d", currentHour, currentMinute)}")
+            
             return shouldReply
             
         } catch (e: Exception) {

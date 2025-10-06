@@ -228,30 +228,62 @@ class MainActivity: FlutterActivity() {
                 return false
             }
             
-            // Check if we're the default call screening app (Android 10+)
-            var isDefault = false
-            try {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                    val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
-                    // Use reflection to access defaultCallScreeningApp for API 29+
-                    try {
-                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                        val defaultApp = method.invoke(telecomManager) as String?
-                        isDefault = defaultApp == packageName
-                        Log.i("MainActivity", "Default call screening app: $defaultApp")
-                        Log.i("MainActivity", "Is our app default: $isDefault")
-                    } catch (reflectionException: Exception) {
-                        Log.w("MainActivity", "Could not access defaultCallScreeningApp via reflection: ${reflectionException.message}")
-                        Log.i("MainActivity", "Assuming not default due to reflection failure")
-                        isDefault = false
+        // Check if we're the default call screening app (Android 10+)
+        var isDefault = false
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+                // Try multiple methods to check if we're the default call screening app
+                try {
+                    // Method 1: Try direct property access
+                    val defaultApp = try {
+                        telecomManager.defaultCallScreeningApp
+                    } catch (e: Exception) {
+                        null
                     }
-                } else {
-                    Log.i("MainActivity", "Android version < 10, default call screening not available")
-                    isDefault = true // For older versions, just being registered is enough
+                    
+                    if (defaultApp != null) {
+                        isDefault = defaultApp == packageName
+                        Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
+                        Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
+                    } else {
+                        // Method 2: Use reflection
+                        try {
+                            val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                            val defaultAppReflection = method.invoke(telecomManager) as String?
+                            isDefault = defaultAppReflection == packageName
+                            Log.i("MainActivity", "Method 2 - Default call screening app: $defaultAppReflection")
+                            Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
+                        } catch (reflectionException: Exception) {
+                            Log.w("MainActivity", "Method 2 failed: ${reflectionException.message}")
+                            
+                            // Method 3: Check via Settings
+                            try {
+                                val settingsValue = android.provider.Settings.Secure.getString(
+                                    contentResolver, 
+                                    "call_screening_app"
+                                )
+                                isDefault = settingsValue == packageName
+                                Log.i("MainActivity", "Method 3 - Settings call_screening_app: $settingsValue")
+                                Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
+                            } catch (settingsException: Exception) {
+                                Log.w("MainActivity", "Method 3 failed: ${settingsException.message}")
+                                // If all methods fail, assume we're not default
+                                isDefault = false
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
+                    isDefault = false
                 }
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
+            } else {
+                Log.i("MainActivity", "Android version < 10, default call screening not available")
+                isDefault = true // For older versions, just being registered is enough
             }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
+        }
             
             if (isRegistered && isDefault) {
                 Log.i("MainActivity", "Call screening is FULLY ENABLED")
@@ -370,9 +402,50 @@ class MainActivity: FlutterActivity() {
         try {
             val prefs = getSharedPreferences("call_blocker_settings", Context.MODE_PRIVATE)
             val isEnabled = prefs.getBoolean("isEnabled", false)
-            val sendAutoReply = prefs.getBoolean("sendAutoReply", true)
+            val sendAutoReply = prefs.getBoolean("sendSMS", true)
             Log.i("MainActivity", "App enabled: $isEnabled")
-            Log.i("MainActivity", "Auto-reply enabled: $sendAutoReply")
+            Log.i("MainActivity", "SMS auto-reply enabled: $sendAutoReply")
+            
+            // Check business hours logic
+            val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+            val currentMinute = java.util.Calendar.getInstance().get(java.util.Calendar.MINUTE)
+            Log.i("MainActivity", "Current time: ${String.format("%02d:%02d", currentHour, currentMinute)}")
+            
+            // Test the business hours logic
+            val dayOfWeek = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_WEEK)
+            val dayName = when (dayOfWeek) {
+                java.util.Calendar.MONDAY -> "monday"
+                java.util.Calendar.TUESDAY -> "tuesday"
+                java.util.Calendar.WEDNESDAY -> "wednesday"
+                java.util.Calendar.THURSDAY -> "thursday"
+                java.util.Calendar.FRIDAY -> "friday"
+                java.util.Calendar.SATURDAY -> "saturday"
+                java.util.Calendar.SUNDAY -> "sunday"
+                else -> "monday"
+            }
+            
+            val dayEnabled = prefs.getBoolean("${dayName}_enabled", true)
+            val startHour = prefs.getInt("${dayName}_startHour", 9)
+            val startMinute = prefs.getInt("${dayName}_startMinute", 0)
+            val endHour = prefs.getInt("${dayName}_endHour", 17)
+            val endMinute = prefs.getInt("${dayName}_endMinute", 0)
+            
+            Log.i("MainActivity", "Day '$dayName' enabled: $dayEnabled")
+            Log.i("MainActivity", "Business hours: ${String.format("%02d:%02d", startHour, startMinute)} to ${String.format("%02d:%02d", endHour, endMinute)}")
+            
+            val currentTimeMinutes = currentHour * 60 + currentMinute
+            val startTimeMinutes = startHour * 60 + startMinute
+            val endTimeMinutes = endHour * 60 + endMinute
+            
+            val isBusinessHours = if (startTimeMinutes <= endTimeMinutes) {
+                currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes
+            } else {
+                currentTimeMinutes >= startTimeMinutes || currentTimeMinutes <= endTimeMinutes
+            }
+            
+            Log.i("MainActivity", "Is business hours: $isBusinessHours")
+            Log.i("MainActivity", "Should send auto-reply (outside business hours): ${!isBusinessHours}")
+            
         } catch (e: Exception) {
             Log.e("MainActivity", "Error reading SMS settings: ${e.message}")
         }
@@ -448,23 +521,64 @@ class MainActivity: FlutterActivity() {
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                 val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+                var isDefault = false
+                var defaultApp: String? = null
+                
+                // Try multiple methods to check if we're the default call screening app
                 try {
-                    val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                    val defaultApp = method.invoke(telecomManager) as String?
-                    Log.i("MainActivity", "Default call screening app: $defaultApp")
-                    Log.i("MainActivity", "Our package: $packageName")
-                    Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+                    // Method 1: Try direct property access
+                    defaultApp = try {
+                        telecomManager.defaultCallScreeningApp
+                    } catch (e: Exception) {
+                        null
+                    }
                     
-                    if (defaultApp == packageName) {
+                    if (defaultApp != null) {
+                        isDefault = defaultApp == packageName
+                        Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
+                        Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
+                    } else {
+                        // Method 2: Use reflection
+                        try {
+                            val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                            defaultApp = method.invoke(telecomManager) as String?
+                            isDefault = defaultApp == packageName
+                            Log.i("MainActivity", "Method 2 - Default call screening app: $defaultApp")
+                            Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
+                        } catch (reflectionException: Exception) {
+                            Log.w("MainActivity", "Method 2 failed: ${reflectionException.message}")
+                            
+                            // Method 3: Check via Settings
+                            try {
+                                val settingsValue = android.provider.Settings.Secure.getString(
+                                    contentResolver, 
+                                    "call_screening_app"
+                                )
+                                defaultApp = settingsValue
+                                isDefault = settingsValue == packageName
+                                Log.i("MainActivity", "Method 3 - Settings call_screening_app: $settingsValue")
+                                Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
+                            } catch (settingsException: Exception) {
+                                Log.w("MainActivity", "Method 3 failed: ${settingsException.message}")
+                                isDefault = false
+                            }
+                        }
+                    }
+                    
+                    Log.i("MainActivity", "Our package: $packageName")
+                    Log.i("MainActivity", "Final result - Is our app default: $isDefault")
+                    
+                    if (isDefault) {
                         Log.i("MainActivity", "✅ WE ARE THE DEFAULT CALL SCREENING APP!")
                         Log.i("MainActivity", "Calls should be screened by our service")
                     } else {
                         Log.w("MainActivity", "❌ WE ARE NOT THE DEFAULT CALL SCREENING APP")
+                        Log.w("MainActivity", "Current default app: $defaultApp")
                         Log.w("MainActivity", "User must set this app as default in Settings")
                         Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
                     }
-                } catch (reflectionException: Exception) {
-                    Log.w("MainActivity", "Could not check default app via reflection: ${reflectionException.message}")
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
                 }
             } else {
                 Log.i("MainActivity", "Android version < 10, default call screening not available")
