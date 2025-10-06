@@ -257,5 +257,15 @@ class CallBlockerService {
       print('❌ CallBlockerService: SMS test failed: $e');
     }
   }
+
+  Future<void> openCallScreeningSettings() async {
+    print('⚙️ CallBlockerService: Opening call screening settings...');
+    try {
+      await _channel.invokeMethod('openCallScreeningSettings');
+      print('✅ CallBlockerService: Call screening settings opened');
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to open call screening settings: $e');
+    }
+  }
 }
 

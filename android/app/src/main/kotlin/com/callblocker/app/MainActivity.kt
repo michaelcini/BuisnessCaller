@@ -1,5 +1,6 @@
 package com.callblocker.app
 
+import android.content.Context
 import android.content.Intent
 import android.os.BatteryManager
 import android.os.PowerManager
@@ -69,6 +70,10 @@ class MainActivity: FlutterActivity() {
                     val phoneNumber = call.argument<String>("phoneNumber")
                     val message = call.argument<String>("message")
                     testSMS(phoneNumber, message)
+                    result.success(null)
+                }
+                "openCallScreeningSettings" -> {
+                    openCallScreeningSettings()
                     result.success(null)
                 }
                 else -> {
@@ -202,26 +207,48 @@ class MainActivity: FlutterActivity() {
 
     private fun isCallScreeningEnabled(): Boolean {
         return try {
-            // For Android 10+ (API 29+), we need to check if our CallScreeningService is registered
+            Log.i("MainActivity", "=== CALL SCREENING STATUS CHECK ===")
+            Log.i("MainActivity", "Our package name: $packageName")
+            
+            // Check if service is registered
             val packageManager = packageManager
             val serviceIntent = Intent("android.telecom.CallScreeningService")
             serviceIntent.setPackage(packageName)
-            
             val resolveInfo = packageManager.resolveService(serviceIntent, 0)
             val isRegistered = resolveInfo != null
             
-            Log.i("MainActivity", "=== CALL SCREENING STATUS CHECK ===")
             Log.i("MainActivity", "CallScreeningService registered: $isRegistered")
-            Log.i("MainActivity", "Our package name: $packageName")
             
-            if (isRegistered) {
-                Log.i("MainActivity", "Call screening service is REGISTERED")
-                Log.i("MainActivity", "User needs to set this app as default call screening app in Settings")
-            } else {
+            if (!isRegistered) {
                 Log.w("MainActivity", "Call screening service is NOT REGISTERED")
+                return false
             }
             
-            isRegistered
+            // Check if we're the default call screening app (Android 10+)
+            var isDefault = false
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+                    val defaultApp = telecomManager.defaultCallScreeningApp
+                    isDefault = defaultApp == packageName
+                    Log.i("MainActivity", "Default call screening app: $defaultApp")
+                    Log.i("MainActivity", "Is our app default: $isDefault")
+                } else {
+                    Log.i("MainActivity", "Android version < 10, default call screening not available")
+                    isDefault = true // For older versions, just being registered is enough
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
+            }
+            
+            if (isRegistered && isDefault) {
+                Log.i("MainActivity", "Call screening is FULLY ENABLED")
+            } else if (isRegistered && !isDefault) {
+                Log.w("MainActivity", "Service registered but NOT set as default")
+                Log.w("MainActivity", "User must set this app as default call screening app")
+            }
+            
+            isRegistered && isDefault
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking call screening status: ${e.message}")
             e.printStackTrace()
@@ -230,7 +257,7 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun testCallScreening() {
-        Log.i("MainActivity", "=== TESTING CALL SCREENING ===")
+        Log.i("MainActivity", "=== COMPREHENSIVE CALL SCREENING TEST ===")
         Log.i("MainActivity", "Package name: $packageName")
         
         // Check if service is registered
@@ -242,32 +269,128 @@ class MainActivity: FlutterActivity() {
         Log.i("MainActivity", "CallScreeningService registered: ${resolveInfo != null}")
         if (resolveInfo != null) {
             Log.i("MainActivity", "Service info: ${resolveInfo.serviceInfo}")
+            Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
+            Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
         }
         
         // Check if we're registered as a call screening service
         val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
         Log.i("MainActivity", "TelecomManager available: ${telecomManager != null}")
-        Log.i("MainActivity", "Note: User must manually set this app as default call screening app")
         
-        // Check permissions
-        val phonePermission = checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE)
-        val smsPermission = checkSelfPermission(android.Manifest.permission.SEND_SMS)
-        val receiveSmsPermission = checkSelfPermission(android.Manifest.permission.RECEIVE_SMS)
+        // Check if we're the default call screening app (Android 10+)
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                val defaultApp = telecomManager.defaultCallScreeningApp
+                Log.i("MainActivity", "Default call screening app: $defaultApp")
+                Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+            } else {
+                Log.i("MainActivity", "Android version < 10, default call screening not available")
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
+        }
         
-        Log.i("MainActivity", "READ_PHONE_STATE permission: $phonePermission")
-        Log.i("MainActivity", "SEND_SMS permission: $smsPermission")
-        Log.i("MainActivity", "RECEIVE_SMS permission: $receiveSmsPermission")
+        // Check all relevant permissions
+        val permissions = listOf(
+            android.Manifest.permission.READ_PHONE_STATE,
+            android.Manifest.permission.SEND_SMS,
+            android.Manifest.permission.RECEIVE_SMS,
+            android.Manifest.permission.READ_CALL_LOG,
+            android.Manifest.permission.CALL_PHONE,
+            android.Manifest.permission.MODIFY_PHONE_STATE,
+            android.Manifest.permission.SYSTEM_ALERT_WINDOW
+        )
+        
+        Log.i("MainActivity", "=== PERMISSION STATUS ===")
+        for (permission in permissions) {
+            val status = checkSelfPermission(permission)
+            val statusText = when (status) {
+                android.content.pm.PackageManager.PERMISSION_GRANTED -> "GRANTED"
+                android.content.pm.PackageManager.PERMISSION_DENIED -> "DENIED"
+                else -> "UNKNOWN ($status)"
+            }
+            Log.i("MainActivity", "$permission: $statusText")
+        }
+        
+        // Check battery optimization
+        val powerManager = getSystemService(POWER_SERVICE) as PowerManager
+        val isBatteryOptimized = powerManager.isIgnoringBatteryOptimizations(packageName)
+        Log.i("MainActivity", "Battery optimization exempted: $isBatteryOptimized")
+        
+        // Check if app is enabled in settings
+        try {
+            val prefs = getSharedPreferences("call_blocker_settings", Context.MODE_PRIVATE)
+            val isEnabled = prefs.getBoolean("isEnabled", false)
+            val blockCalls = prefs.getBoolean("blockCalls", true)
+            Log.i("MainActivity", "App enabled in settings: $isEnabled")
+            Log.i("MainActivity", "Call blocking enabled: $blockCalls")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error reading app settings: ${e.message}")
+        }
+        
+        Log.i("MainActivity", "=== NEXT STEPS ===")
+        Log.i("MainActivity", "1. Ensure all permissions are granted")
+        Log.i("MainActivity", "2. Set this app as default call screening app in Settings")
+        Log.i("MainActivity", "3. Disable battery optimization for this app")
+        Log.i("MainActivity", "4. Enable the app in settings")
     }
 
     private fun testSMS(phoneNumber: String?, message: String?) {
-        Log.i("MainActivity", "=== TESTING SMS ===")
+        Log.i("MainActivity", "=== COMPREHENSIVE SMS TEST ===")
         Log.i("MainActivity", "Phone number: $phoneNumber")
         Log.i("MainActivity", "Message: $message")
         
+        // Check SMS permissions
+        val sendSmsPermission = checkSelfPermission(android.Manifest.permission.SEND_SMS)
+        val receiveSmsPermission = checkSelfPermission(android.Manifest.permission.RECEIVE_SMS)
+        
+        Log.i("MainActivity", "SEND_SMS permission: $sendSmsPermission")
+        Log.i("MainActivity", "RECEIVE_SMS permission: $receiveSmsPermission")
+        
+        // Check if SMS is enabled in settings
+        try {
+            val prefs = getSharedPreferences("call_blocker_settings", Context.MODE_PRIVATE)
+            val isEnabled = prefs.getBoolean("isEnabled", false)
+            val sendAutoReply = prefs.getBoolean("sendAutoReply", true)
+            Log.i("MainActivity", "App enabled: $isEnabled")
+            Log.i("MainActivity", "Auto-reply enabled: $sendAutoReply")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error reading SMS settings: ${e.message}")
+        }
+        
+        // Test SMS sending
         if (phoneNumber != null && message != null) {
+            Log.i("MainActivity", "Attempting to send test SMS...")
             sendSMS(phoneNumber, message)
         } else {
-            Log.w("MainActivity", "Invalid SMS test parameters")
+            Log.w("MainActivity", "Invalid SMS test parameters - using defaults")
+            // Use default test values
+            val testNumber = "+1234567890"
+            val testMessage = "Test SMS from Call Blocker App - ${System.currentTimeMillis()}"
+            Log.i("MainActivity", "Sending test SMS to: $testNumber")
+            sendSMS(testNumber, testMessage)
+        }
+        
+        Log.i("MainActivity", "=== SMS TEST COMPLETED ===")
+    }
+    
+    private fun openCallScreeningSettings() {
+        Log.i("MainActivity", "Opening call screening settings...")
+        try {
+            // Try to open the specific call screening settings
+            val intent = Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+            startActivity(intent)
+            Log.i("MainActivity", "Call screening settings opened")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error opening call screening settings: ${e.message}")
+            // Fallback to general settings
+            try {
+                val fallbackIntent = Intent(Settings.ACTION_SETTINGS)
+                startActivity(fallbackIntent)
+                Log.i("MainActivity", "General settings opened as fallback")
+            } catch (fallbackException: Exception) {
+                Log.e("MainActivity", "Error opening fallback settings: ${fallbackException.message}")
+            }
         }
     }
 }

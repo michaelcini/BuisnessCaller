@@ -263,21 +263,38 @@ class _SetupScreenState extends State<SetupScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/superlog');
-                        },
-                        icon: const Icon(Icons.analytics),
-                        label: const Text('Open Super Log'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
+                 const SizedBox(height: 8),
+                 Row(
+                   children: [
+                     Expanded(
+                       child: ElevatedButton.icon(
+                         onPressed: () {
+                           Navigator.pushNamed(context, '/superlog');
+                         },
+                         icon: const Icon(Icons.analytics),
+                         label: const Text('Open Super Log'),
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.purple,
+                           foregroundColor: Colors.white,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: 8),
+                     Expanded(
+                       child: ElevatedButton.icon(
+                         onPressed: () async {
+                           await _callBlockerService.openCallScreeningSettings();
+                         },
+                         icon: const Icon(Icons.settings),
+                         label: const Text('Call Screening Settings'),
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.blue,
+                           foregroundColor: Colors.white,
+                         ),
+                       ),
+                     ),
+                   ],
+                 ),
                     const SizedBox(height: 8),
                     const Text(
                       'Use these buttons to test functionality and check logs for debugging information.',
