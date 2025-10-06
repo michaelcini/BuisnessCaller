@@ -29,22 +29,27 @@ class _SetupScreenState extends State<SetupScreen> {
 
   Future<void> _checkCallScreeningStatus() async {
     setState(() => _isLoading = true);
+    _superLogService.addInfo('SetupScreen', 'Checking call screening status...');
     try {
       final isEnabled = await _callBlockerService.isCallScreeningEnabled();
       setState(() {
         _isCallScreeningEnabled = isEnabled;
         _isLoading = false;
       });
+      _superLogService.addInfo('SetupScreen', 'Call screening status: $isEnabled');
     } catch (e) {
       setState(() => _isLoading = false);
+      _superLogService.addError('SetupScreen', 'Failed to check call screening status', details: e.toString());
       await _logService.addError('Failed to check call screening status', details: e.toString());
     }
   }
 
   Future<void> _requestCallScreeningPermission() async {
     setState(() => _isLoading = true);
+    _superLogService.addInfo('SetupScreen', 'Requesting call screening permission...');
     try {
       await _callBlockerService.requestCallScreeningPermission();
+      _superLogService.addInfo('SetupScreen', 'Call screening permission requested');
       await _logService.addInfo('User requested call screening permission');
       
       // Show instructions dialog
@@ -52,6 +57,7 @@ class _SetupScreenState extends State<SetupScreen> {
         _showCallScreeningInstructions();
       }
     } catch (e) {
+      _superLogService.addError('SetupScreen', 'Failed to request call screening permission', details: e.toString());
       await _logService.addError('Failed to request call screening permission', details: e.toString());
     } finally {
       setState(() => _isLoading = false);
