@@ -239,6 +239,7 @@ class CallBlockerService {
     print('🧪 CallBlockerService: Testing call screening setup...');
     _superLogService?.addInfo('CallBlockerService', 'Starting call screening test...');
     try {
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreening method...');
       await _channel.invokeMethod('testCallScreening');
       print('✅ CallBlockerService: Call screening test completed');
       _superLogService?.addInfo('CallBlockerService', 'Call screening test completed successfully');
@@ -282,11 +283,14 @@ class CallBlockerService {
 
   Future<void> testCallScreeningService() async {
     print('🔍 CallBlockerService: Testing CallScreeningService activation...');
+    print('SuperLogService available: ${_superLogService != null}');
+    
     _superLogService?.addInfo('CallBlockerService', 'Testing CallScreeningService activation...');
     try {
       _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreeningService method...');
       final results = await _channel.invokeMethod('testCallScreeningService') as Map<dynamic, dynamic>?;
       
+      print('Received results from native: $results');
       _superLogService?.addInfo('CallBlockerService', 'Received results from native: $results');
       
       if (results != null) {

@@ -30,6 +30,10 @@ class _SetupScreenState extends State<SetupScreen> {
   Future<void> _checkCallScreeningStatus() async {
     setState(() => _isLoading = true);
     _superLogService.addInfo('SetupScreen', 'Checking call screening status...');
+    
+    // Ensure CallBlockerService has access to SuperLogService
+    _callBlockerService.setSuperLogService(_superLogService);
+    
     try {
       final isEnabled = await _callBlockerService.isCallScreeningEnabled();
       setState(() {
@@ -540,21 +544,45 @@ class _SetupScreenState extends State<SetupScreen> {
                       child: ElevatedButton.icon(
                         onPressed: () async {
                           _superLogService.addInfo('SetupScreen', 'Running comprehensive diagnostic test...');
+                          
+                          // Ensure CallBlockerService has access to SuperLogService
+                          _callBlockerService.setSuperLogService(_superLogService);
+                          
                           try {
                             _superLogService.addInfo('SetupScreen', 'Step 1: Testing CallScreeningService...');
-                            await _callBlockerService.testCallScreeningService();
+                            try {
+                              await _callBlockerService.testCallScreeningService();
+                              _superLogService.addInfo('SetupScreen', 'Step 1 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 1 failed: $e');
+                            }
                             
                             await Future.delayed(const Duration(seconds: 1));
                             _superLogService.addInfo('SetupScreen', 'Step 2: Testing CallScreeningService with fake call...');
-                            await _callBlockerService.testCallScreeningWithFakeCall();
+                            try {
+                              await _callBlockerService.testCallScreeningWithFakeCall();
+                              _superLogService.addInfo('SetupScreen', 'Step 2 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 2 failed: $e');
+                            }
                             
                             await Future.delayed(const Duration(seconds: 1));
                             _superLogService.addInfo('SetupScreen', 'Step 3: Testing call screening detection...');
-                            await _callBlockerService.testCallScreening();
+                            try {
+                              await _callBlockerService.testCallScreening();
+                              _superLogService.addInfo('SetupScreen', 'Step 3 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 3 failed: $e');
+                            }
                             
                             await Future.delayed(const Duration(seconds: 1));
                             _superLogService.addInfo('SetupScreen', 'Step 4: Testing SMS functionality...');
-                            await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
+                            try {
+                              await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
+                              _superLogService.addInfo('SetupScreen', 'Step 4 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 4 failed: $e');
+                            }
                             
                             _superLogService.addInfo('SetupScreen', 'Comprehensive diagnostic test completed');
                             ScaffoldMessenger.of(context).showSnackBar(
