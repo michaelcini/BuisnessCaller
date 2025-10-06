@@ -319,6 +319,40 @@ class _SetupScreenState extends State<SetupScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
+                    // Test CallScreeningService with fake call button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          _superLogService.addInfo('SetupScreen', 'Test CallScreeningService with fake call button pressed');
+                          try {
+                            await _callBlockerService.testCallScreeningWithFakeCall();
+                            _superLogService.addInfo('SetupScreen', 'Test CallScreeningService with fake call completed');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Fake call test completed - check Super Log for service creation'),
+                                backgroundColor: Colors.teal,
+                              ),
+                            );
+                          } catch (e) {
+                            _superLogService.addError('SetupScreen', 'Test CallScreeningService with fake call failed', details: e.toString());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Test failed: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.phone_in_talk),
+                        label: const Text('Test CallScreeningService (Fake Call)'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(

@@ -293,5 +293,19 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  Future<void> testCallScreeningWithFakeCall() async {
+    print('📞 CallBlockerService: Testing call screening with fake call...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing call screening with fake call...');
+    try {
+      await _channel.invokeMethod('testCallScreeningWithFakeCall');
+      print('✅ CallBlockerService: Fake call test completed');
+      _superLogService?.addInfo('CallBlockerService', 'Fake call test completed - check logs for service creation');
+    } catch (e) {
+      print('❌ CallBlockerService: Fake call test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'Fake call test failed', details: e.toString());
+      rethrow;
+    }
+  }
 }
 
