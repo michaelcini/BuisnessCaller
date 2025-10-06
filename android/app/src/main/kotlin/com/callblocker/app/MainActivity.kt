@@ -88,17 +88,36 @@ class MainActivity: FlutterActivity() {
     }
 
     private fun startCallBlockerService() {
-        Log.d("MainActivity", "Starting CallBlockerService...")
+        Log.i("MainActivity", "=== STARTING CALL BLOCKER SERVICE ===")
+        Log.i("MainActivity", "Package name: $packageName")
+        
+        // Start the foreground service
         val serviceIntent = Intent(this, CallBlockerService::class.java).apply {
             action = CallBlockerService.ACTION_START_SERVICE
         }
         try {
             startForegroundService(serviceIntent)
-            Log.d("MainActivity", "CallBlockerService started successfully")
+            Log.i("MainActivity", "CallBlockerService foreground service started successfully")
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to start CallBlockerService: ${e.message}")
             e.printStackTrace()
         }
+        
+        // Verify call screening service is registered
+        val packageManager = packageManager
+        val callScreeningIntent = Intent("android.telecom.CallScreeningService")
+        callScreeningIntent.setPackage(packageName)
+        val resolveInfo = packageManager.resolveService(callScreeningIntent, 0)
+        
+        if (resolveInfo != null) {
+            Log.i("MainActivity", "CallScreeningService is registered and available")
+            Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
+            Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
+        } else {
+            Log.e("MainActivity", "CallScreeningService is NOT registered!")
+        }
+        
+        Log.i("MainActivity", "=== CALL BLOCKER SERVICE STARTUP COMPLETE ===")
     }
 
     private fun stopCallBlockerService() {

@@ -321,56 +321,113 @@ class _SetupScreenState extends State<SetupScreen> {
                         ),
                       ],
                     ),
-                 const SizedBox(height: 8),
-                 Row(
-                   children: [
-                     Expanded(
-                       child: ElevatedButton.icon(
-                         onPressed: () {
-                           Navigator.pushNamed(context, '/superlog');
-                         },
-                         icon: const Icon(Icons.analytics),
-                         label: const Text('Open Super Log'),
-                         style: ElevatedButton.styleFrom(
-                           backgroundColor: Colors.purple,
-                           foregroundColor: Colors.white,
-                         ),
-                       ),
-                     ),
-                     const SizedBox(width: 8),
-                     Expanded(
-                       child: ElevatedButton.icon(
-                         onPressed: () async {
-                           _superLogService.addInfo('SetupScreen', 'Call Screening Settings button pressed');
-                           try {
-                             await _callBlockerService.openCallScreeningSettings();
-                             _superLogService.addInfo('SetupScreen', 'Call Screening Settings opened');
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               const SnackBar(
-                                 content: Text('Settings opened - set this app as default call screening app'),
-                                 backgroundColor: Colors.blue,
-                               ),
-                             );
-                           } catch (e) {
-                             _superLogService.addError('SetupScreen', 'Failed to open settings', details: e.toString());
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(
-                                 content: Text('Failed to open settings: $e'),
-                                 backgroundColor: Colors.red,
-                               ),
-                             );
-                           }
-                         },
-                         icon: const Icon(Icons.settings),
-                         label: const Text('Call Screening Settings'),
-                         style: ElevatedButton.styleFrom(
-                           backgroundColor: Colors.blue,
-                           foregroundColor: Colors.white,
-                         ),
-                       ),
-                     ),
-                   ],
-                 ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/superlog');
+                            },
+                            icon: const Icon(Icons.analytics),
+                            label: const Text('Open Super Log'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Call Screening Settings button pressed');
+                              try {
+                                await _callBlockerService.openCallScreeningSettings();
+                                _superLogService.addInfo('SetupScreen', 'Call Screening Settings opened');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Settings opened - set this app as default call screening app'),
+                                    backgroundColor: Colors.blue,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Failed to open settings', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to open settings: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.settings),
+                            label: const Text('Call Screening Settings'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Simulate Call button pressed');
+                              try {
+                                await _callBlockerService.simulateIncomingCall('+1234567890');
+                                _superLogService.addInfo('SetupScreen', 'Call simulation completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Call simulation completed - check Super Log for details'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Call simulation failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Simulation failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.phone),
+                            label: const Text('Simulate Call'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Check Status button pressed');
+                              await _checkCallScreeningStatus();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Status checked - see results above'),
+                                  backgroundColor: Colors.blue,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Check Status'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Use these buttons to test functionality and check logs for debugging information.',
