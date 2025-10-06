@@ -229,10 +229,18 @@ class MainActivity: FlutterActivity() {
             try {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                     val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
-                    val defaultApp = telecomManager.defaultCallScreeningApp
-                    isDefault = defaultApp == packageName
-                    Log.i("MainActivity", "Default call screening app: $defaultApp")
-                    Log.i("MainActivity", "Is our app default: $isDefault")
+                    // Use reflection to access defaultCallScreeningApp for API 29+
+                    try {
+                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                        val defaultApp = method.invoke(telecomManager) as String?
+                        isDefault = defaultApp == packageName
+                        Log.i("MainActivity", "Default call screening app: $defaultApp")
+                        Log.i("MainActivity", "Is our app default: $isDefault")
+                    } catch (reflectionException: Exception) {
+                        Log.w("MainActivity", "Could not access defaultCallScreeningApp via reflection: ${reflectionException.message}")
+                        Log.i("MainActivity", "Assuming not default due to reflection failure")
+                        isDefault = false
+                    }
                 } else {
                     Log.i("MainActivity", "Android version < 10, default call screening not available")
                     isDefault = true // For older versions, just being registered is enough
@@ -280,9 +288,16 @@ class MainActivity: FlutterActivity() {
         // Check if we're the default call screening app (Android 10+)
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                val defaultApp = telecomManager.defaultCallScreeningApp
-                Log.i("MainActivity", "Default call screening app: $defaultApp")
-                Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+                // Use reflection to access defaultCallScreeningApp for API 29+
+                try {
+                    val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                    val defaultApp = method.invoke(telecomManager) as String?
+                    Log.i("MainActivity", "Default call screening app: $defaultApp")
+                    Log.i("MainActivity", "Is our app default: ${defaultApp == packageName}")
+                } catch (reflectionException: Exception) {
+                    Log.w("MainActivity", "Could not access defaultCallScreeningApp via reflection: ${reflectionException.message}")
+                    Log.i("MainActivity", "Cannot determine if app is default call screening app")
+                }
             } else {
                 Log.i("MainActivity", "Android version < 10, default call screening not available")
             }
