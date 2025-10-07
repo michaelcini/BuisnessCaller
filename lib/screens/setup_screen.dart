@@ -497,6 +497,38 @@ class _SetupScreenState extends State<SetupScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Test Accessibility Service (Detailed) button pressed');
+                              try {
+                                await _callBlockerService.testAccessibilityServiceWithLogs();
+                                _superLogService.addInfo('SetupScreen', 'Test Accessibility Service (Detailed) completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Accessibility service detailed test completed - check logs for comprehensive details'),
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test Accessibility Service (Detailed) failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Detailed test failed: $e')),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.bug_report),
+                            label: const Text('Test Accessibility (Detailed)'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
                               _superLogService.addInfo('SetupScreen', 'Test Call Screening button pressed');
                               try {
                                 await _callBlockerService.testCallScreening();

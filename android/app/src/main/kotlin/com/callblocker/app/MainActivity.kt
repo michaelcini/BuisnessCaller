@@ -123,6 +123,10 @@ class MainActivity: FlutterActivity() {
                     testAccessibilityService()
                     result.success(null)
                 }
+                "testAccessibilityServiceWithLogs" -> {
+                    testAccessibilityServiceWithLogs()
+                    result.success(null)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -913,5 +917,80 @@ class MainActivity: FlutterActivity() {
         }
         
         Log.i("MainActivity", "=== ACCESSIBILITY SERVICE TEST COMPLETED ===")
+    }
+
+    private fun testAccessibilityServiceWithLogs() {
+        Log.i("MainActivity", "=== TESTING ACCESSIBILITY SERVICE WITH DETAILED LOGS ===")
+        
+        try {
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            val packageName = packageName
+            
+            Log.i("MainActivity", "Package name: $packageName")
+            Log.i("MainActivity", "Accessibility manager: $accessibilityManager")
+            
+            // Check if accessibility is enabled
+            val isAccessibilityEnabled = accessibilityManager.isEnabled
+            Log.i("MainActivity", "Accessibility is enabled: $isAccessibilityEnabled")
+            
+            if (!isAccessibilityEnabled) {
+                Log.e("MainActivity", "Accessibility is not enabled on this device!")
+                return
+            }
+            
+            // Check if service is installed
+            val method = accessibilityManager.javaClass.getMethod("getInstalledAccessibilityServiceList")
+            val installedServices = method.invoke(accessibilityManager) as List<*>
+            
+            Log.i("MainActivity", "Total installed accessibility services: ${installedServices.size}")
+            
+            val serviceName = "${packageName}/${CallDeclinerAccessibilityService::class.java.name}"
+            Log.i("MainActivity", "Looking for service: $serviceName")
+            
+            var isInstalled = false
+            for (i in installedServices.indices) {
+                val service = installedServices[i]
+                try {
+                    val serviceInfo = service?.javaClass?.getMethod("getResolveInfo")?.invoke(service)
+                    val serviceInfoObj = serviceInfo?.javaClass?.getMethod("getServiceInfo")?.invoke(serviceInfo)
+                    val packageName = serviceInfoObj?.javaClass?.getMethod("getPackageName")?.invoke(serviceInfoObj) as? String
+                    val className = serviceInfoObj?.javaClass?.getMethod("getName")?.invoke(serviceInfoObj) as? String
+                    
+                    if (packageName != null && className != null) {
+                        val serviceId = "$packageName/$className"
+                        Log.d("MainActivity", "Service $i: $serviceId")
+                        if (serviceId == serviceName) {
+                            isInstalled = true
+                            Log.i("MainActivity", "Found our service at index $i")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.d("MainActivity", "Error processing service $i: ${e.message}")
+                }
+            }
+            
+            Log.i("MainActivity", "Service installed: $isInstalled")
+            
+            if (!isInstalled) {
+                Log.e("MainActivity", "Service is not properly installed!")
+                return
+            }
+            
+            // Check if service is enabled
+            val isEnabled = isAccessibilityServiceEnabled()
+            Log.i("MainActivity", "Service enabled: $isEnabled")
+            
+            if (!isEnabled) {
+                Log.w("MainActivity", "Service is not enabled! Please enable it in accessibility settings.")
+                return
+            }
+            
+            Log.i("MainActivity", "Accessibility service test completed successfully!")
+            Log.i("MainActivity", "The service should now be monitoring for incoming calls...")
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error testing accessibility service: ${e.message}")
+            e.printStackTrace()
+        }
     }
 }

@@ -22,22 +22,54 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
         Log.i(TAG, "Call Decliner Accessibility Service is now active!")
         Log.i(TAG, "Service will automatically decline calls during non-business hours")
         
+        // Log service capabilities
+        Log.i(TAG, "Service capabilities:")
+        Log.i(TAG, "- Can retrieve window content: ${serviceInfo?.canRetrieveWindowContent}")
+        Log.i(TAG, "- Event types: ${serviceInfo?.eventTypes}")
+        Log.i(TAG, "- Feedback type: ${serviceInfo?.feedbackType}")
+        Log.i(TAG, "- Flags: ${serviceInfo?.flags}")
+        
         val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
+            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or 
+                        AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
+                        AccessibilityEvent.TYPE_VIEW_CLICKED or
+                        AccessibilityEvent.TYPE_VIEW_FOCUSED
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-            notificationTimeout = 100
+            flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
+                   AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+            notificationTimeout = 50
+            canRetrieveWindowContent = true
         }
         serviceInfo = info
+        
+        Log.i(TAG, "Service configuration updated with enhanced event detection")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        // Log all events for debugging
+        Log.d(TAG, "=== ACCESSIBILITY EVENT ===")
+        Log.d(TAG, "Event type: ${event.eventType}")
+        Log.d(TAG, "Package: ${event.packageName}")
+        Log.d(TAG, "Class: ${event.className}")
+        Log.d(TAG, "Text: ${event.text}")
+        Log.d(TAG, "Content description: ${event.contentDescription}")
+        
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                Log.d(TAG, "Processing WINDOW_STATE_CHANGED event")
                 handleWindowStateChanged(event)
             }
             AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
+                Log.d(TAG, "Processing WINDOW_CONTENT_CHANGED event")
                 handleWindowContentChanged(event)
+            }
+            AccessibilityEvent.TYPE_VIEW_CLICKED -> {
+                Log.d(TAG, "Processing VIEW_CLICKED event")
+                handleViewClicked(event)
+            }
+            AccessibilityEvent.TYPE_VIEW_FOCUSED -> {
+                Log.d(TAG, "Processing VIEW_FOCUSED event")
+                handleViewFocused(event)
             }
         }
     }
@@ -67,12 +99,55 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
     private fun handleWindowContentChanged(event: AccessibilityEvent) {
         // This can be used for more detailed call screen detection
         val packageName = event.packageName?.toString()
+        val className = event.className?.toString()
+        
+        Log.d(TAG, "Window content changed - Package: $packageName, Class: $className")
+        
+        if (isCallScreen(packageName, className)) {
+            Log.i(TAG, "=== CALL SCREEN CONTENT CHANGED ===")
+            Log.i(TAG, "Package: $packageName, Class: $className")
+            
+            // Check if we should decline the call
+            if (shouldDeclineCall()) {
+                Log.i(TAG, "Call should be declined - attempting to decline...")
+                declineCall()
+            } else {
+                Log.i(TAG, "Call should be allowed - not declining")
+            }
+        }
+    }
+
+    private fun handleViewClicked(event: AccessibilityEvent) {
+        val packageName = event.packageName?.toString()
+        val text = event.text?.toString()
+        val contentDesc = event.contentDescription?.toString()
+        
+        Log.d(TAG, "View clicked - Package: $packageName, Text: $text, Content: $contentDesc")
+        
+        // Check if this might be a call-related click
         if (isCallScreen(packageName, null)) {
-            Log.d(TAG, "Call screen content changed - Package: $packageName")
+            Log.i(TAG, "Click detected in call screen")
+        }
+    }
+
+    private fun handleViewFocused(event: AccessibilityEvent) {
+        val packageName = event.packageName?.toString()
+        val text = event.text?.toString()
+        val contentDesc = event.contentDescription?.toString()
+        
+        Log.d(TAG, "View focused - Package: $packageName, Text: $text, Content: $contentDesc")
+        
+        // Check if this might be a call-related focus
+        if (isCallScreen(packageName, null)) {
+            Log.i(TAG, "Focus detected in call screen")
         }
     }
 
     private fun isCallScreen(packageName: String?, className: String?): Boolean {
+        Log.d(TAG, "=== CHECKING IF THIS IS A CALL SCREEN ===")
+        Log.d(TAG, "Package: $packageName")
+        Log.d(TAG, "Class: $className")
+        
         // Common call screen packages and classes
         val callPackages = listOf(
             "com.android.incallui",
@@ -81,7 +156,17 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
             "com.google.android.dialer",
             "com.oneplus.incallui",
             "com.miui.incallui",
-            "com.huawei.incallui"
+            "com.huawei.incallui",
+            "com.oppo.incallui",
+            "com.vivo.incallui",
+            "com.realme.incallui",
+            "com.android.dialer",
+            "com.android.server.telecom",
+            "com.android.telecom",
+            "com.android.phone.incallui",
+            "com.android.incallui.incallui",
+            "com.android.incallui.incallui2",
+            "com.android.incallui.incallui3"
         )
         
         val callClasses = listOf(
@@ -89,13 +174,41 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
             "com.android.incallui.InCallServiceImpl",
             "com.android.phone.InCallScreen",
             "com.samsung.android.incallui.InCallActivity",
-            "com.google.android.dialer.app.incallui.InCallActivity"
+            "com.google.android.dialer.app.incallui.InCallActivity",
+            "com.oneplus.incallui.OPInCallActivity",
+            "com.miui.incallui.InCallActivity",
+            "com.huawei.incallui.InCallActivity",
+            "com.oppo.incallui.OppoInCallActivity",
+            "com.vivo.incallui.VivoInCallActivity",
+            "com.realme.incallui.RealmeInCallActivity",
+            "com.android.dialer.app.incallui.InCallActivity",
+            "com.android.server.telecom.InCallActivity",
+            "com.android.telecom.InCallActivity",
+            "com.android.phone.incallui.InCallActivity",
+            "com.android.incallui.incallui.InCallActivity",
+            "com.android.incallui.incallui2.InCallActivity",
+            "com.android.incallui.incallui3.InCallActivity"
         )
         
-        val isCallPackage = packageName?.let { callPackages.contains(it) } ?: false
-        val isCallClass = className?.let { callClasses.contains(it) } ?: false
+        // Check for partial matches (some devices use different naming)
+        val packageNameLower = packageName?.lowercase() ?: ""
+        val classNameLower = className?.lowercase() ?: ""
         
-        Log.d(TAG, "Checking call screen - Package: $isCallPackage, Class: $isCallClass")
+        val isCallPackage = callPackages.any { it.lowercase() == packageNameLower } ||
+                           packageNameLower.contains("incallui") ||
+                           packageNameLower.contains("dialer") ||
+                           packageNameLower.contains("phone") ||
+                           packageNameLower.contains("telecom")
+        
+        val isCallClass = callClasses.any { it.lowercase() == classNameLower } ||
+                         classNameLower.contains("incall") ||
+                         classNameLower.contains("incallui") ||
+                         classNameLower.contains("incallactivity") ||
+                         classNameLower.contains("incallservice")
+        
+        Log.d(TAG, "Call package match: $isCallPackage")
+        Log.d(TAG, "Call class match: $isCallClass")
+        Log.d(TAG, "Is call screen: ${isCallPackage || isCallClass}")
         
         return isCallPackage || isCallClass
     }
@@ -209,6 +322,8 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
                 return
             }
             
+            Log.i(TAG, "Root node found, searching for decline buttons...")
+            
             // Look for decline/end call buttons
             val declineButtons = findDeclineButtons(rootNode)
             Log.i(TAG, "Found ${declineButtons.size} decline buttons")
@@ -216,14 +331,42 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
             if (declineButtons.isNotEmpty()) {
                 // Click the first decline button found
                 val button = declineButtons[0]
-                Log.i(TAG, "Clicking decline button: ${button.text}")
-                button.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                Log.i(TAG, "Call declined successfully!")
+                val buttonText = button.text?.toString() ?: "Unknown"
+                val buttonDesc = button.contentDescription?.toString() ?: "Unknown"
                 
-                // Send SMS auto-reply if enabled
-                sendAutoReplySMS()
+                Log.i(TAG, "Clicking decline button - Text: '$buttonText', Description: '$buttonDesc'")
+                
+                // Try multiple click methods
+                var success = false
+                
+                // Method 1: Direct click
+                try {
+                    success = button.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                    Log.i(TAG, "Direct click result: $success")
+                } catch (e: Exception) {
+                    Log.w(TAG, "Direct click failed: ${e.message}")
+                }
+                
+                // Method 2: Long click if direct click failed
+                if (!success) {
+                    try {
+                        success = button.performAction(AccessibilityNodeInfo.ACTION_LONG_CLICK)
+                        Log.i(TAG, "Long click result: $success")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Long click failed: ${e.message}")
+                    }
+                }
+                
+                if (success) {
+                    Log.i(TAG, "Call declined successfully!")
+                    // Send SMS auto-reply if enabled
+                    sendAutoReplySMS()
+                } else {
+                    Log.w(TAG, "All click methods failed, trying alternative methods...")
+                    tryAlternativeDeclineMethods(rootNode)
+                }
             } else {
-                Log.w(TAG, "No decline buttons found")
+                Log.w(TAG, "No decline buttons found, trying alternative methods...")
                 // Try alternative methods
                 tryAlternativeDeclineMethods(rootNode)
             }
@@ -237,48 +380,76 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
     private fun findDeclineButtons(rootNode: AccessibilityNodeInfo): List<AccessibilityNodeInfo> {
         val declineButtons = mutableListOf<AccessibilityNodeInfo>()
         
+        Log.d(TAG, "=== SEARCHING FOR DECLINE BUTTONS ===")
+        
         // Common decline button texts and content descriptions
         val declineTexts = listOf(
-            "Decline", "Reject", "End", "Hang up", "Cancel",
-            "decline", "reject", "end", "hang up", "cancel",
-            "DECLINE", "REJECT", "END", "HANG UP", "CANCEL"
+            "Decline", "Reject", "End", "Hang up", "Cancel", "Dismiss",
+            "decline", "reject", "end", "hang up", "cancel", "dismiss",
+            "DECLINE", "REJECT", "END", "HANG UP", "CANCEL", "DISMISS",
+            "✕", "×", "❌", "⛔", "🚫", "No", "NO", "no"
         )
         
         // Common decline button content descriptions
         val declineContentDescriptions = listOf(
-            "Decline call", "Reject call", "End call", "Hang up call",
-            "decline call", "reject call", "end call", "hang up call"
+            "Decline call", "Reject call", "End call", "Hang up call", "Cancel call",
+            "decline call", "reject call", "end call", "hang up call", "cancel call",
+            "Decline", "Reject", "End", "Hang up", "Cancel", "Dismiss",
+            "decline", "reject", "end", "hang up", "cancel", "dismiss"
         )
         
-        fun searchNodes(node: AccessibilityNodeInfo) {
+        // Resource IDs that might be decline buttons (common patterns)
+        val declineResourceIds = listOf(
+            "decline", "reject", "end", "hangup", "cancel", "dismiss",
+            "btn_decline", "btn_reject", "btn_end", "btn_hangup", "btn_cancel",
+            "button_decline", "button_reject", "button_end", "button_hangup",
+            "call_decline", "call_reject", "call_end", "call_hangup"
+        )
+        
+        fun searchNodes(node: AccessibilityNodeInfo, depth: Int = 0) {
             if (node == null) return
+            
+            val indent = "  ".repeat(depth)
+            val text = node.text?.toString() ?: ""
+            val contentDesc = node.contentDescription?.toString() ?: ""
+            val resourceId = node.viewIdResourceName ?: ""
+            val className = node.className?.toString() ?: ""
+            
+            Log.d(TAG, "${indent}Node: Class=$className, Text='$text', Desc='$contentDesc', ID='$resourceId', Clickable=${node.isClickable}")
             
             // Check if this node is clickable and has decline text
             if (node.isClickable) {
-                val text = node.text?.toString()?.lowercase()
-                val contentDesc = node.contentDescription?.toString()?.lowercase()
+                val textLower = text.lowercase()
+                val contentDescLower = contentDesc.lowercase()
+                val resourceIdLower = resourceId.lowercase()
                 
-                if (text != null && declineTexts.any { text.contains(it.lowercase()) }) {
-                    Log.d(TAG, "Found decline button by text: $text")
-                    declineButtons.add(node)
-                } else if (contentDesc != null && declineContentDescriptions.any { contentDesc.contains(it.lowercase()) }) {
-                    Log.d(TAG, "Found decline button by content description: $contentDesc")
+                val isDeclineByText = textLower.isNotEmpty() && declineTexts.any { textLower.contains(it.lowercase()) }
+                val isDeclineByContentDesc = contentDescLower.isNotEmpty() && declineContentDescriptions.any { contentDescLower.contains(it.lowercase()) }
+                val isDeclineByResourceId = resourceIdLower.isNotEmpty() && declineResourceIds.any { resourceIdLower.contains(it.lowercase()) }
+                
+                if (isDeclineByText || isDeclineByContentDesc || isDeclineByResourceId) {
+                    Log.i(TAG, "${indent}*** FOUND DECLINE BUTTON ***")
+                    Log.i(TAG, "${indent}Text: '$text'")
+                    Log.i(TAG, "${indent}Content Description: '$contentDesc'")
+                    Log.i(TAG, "${indent}Resource ID: '$resourceId'")
+                    Log.i(TAG, "${indent}Class: '$className'")
                     declineButtons.add(node)
                 }
             }
             
             // Search child nodes
             for (i in 0 until node.childCount) {
-                searchNodes(node.getChild(i))
+                searchNodes(node.getChild(i), depth + 1)
             }
         }
         
         searchNodes(rootNode)
+        Log.i(TAG, "Total decline buttons found: ${declineButtons.size}")
         return declineButtons
     }
 
     private fun tryAlternativeDeclineMethods(rootNode: AccessibilityNodeInfo) {
-        Log.i(TAG, "Trying alternative decline methods...")
+        Log.i(TAG, "=== TRYING ALTERNATIVE DECLINE METHODS ===")
         
         try {
             // Try to find any clickable element that might be a decline button
@@ -300,21 +471,69 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
             
             Log.i(TAG, "Found ${clickableNodes.size} clickable nodes")
             
+            // Log all clickable nodes for debugging
+            for (i in clickableNodes.indices) {
+                val node = clickableNodes[i]
+                val text = node.text?.toString() ?: ""
+                val contentDesc = node.contentDescription?.toString() ?: ""
+                val resourceId = node.viewIdResourceName ?: ""
+                val className = node.className?.toString() ?: ""
+                
+                Log.d(TAG, "Clickable node $i: Class=$className, Text='$text', Desc='$contentDesc', ID='$resourceId'")
+            }
+            
             // Try clicking nodes that might be decline buttons
+            var success = false
             for (node in clickableNodes) {
                 val text = node.text?.toString()?.lowercase() ?: ""
                 val contentDesc = node.contentDescription?.toString()?.lowercase() ?: ""
+                val resourceId = node.viewIdResourceName?.lowercase() ?: ""
                 
+                // Look for any button that might be related to declining calls
                 if (text.contains("call") || contentDesc.contains("call") ||
-                    text.contains("phone") || contentDesc.contains("phone")) {
-                    Log.i(TAG, "Trying to click potential decline button: $text / $contentDesc")
-                    node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                    break
+                    text.contains("phone") || contentDesc.contains("phone") ||
+                    text.contains("end") || contentDesc.contains("end") ||
+                    text.contains("hang") || contentDesc.contains("hang") ||
+                    text.contains("reject") || contentDesc.contains("reject") ||
+                    text.contains("decline") || contentDesc.contains("decline") ||
+                    text.contains("cancel") || contentDesc.contains("cancel") ||
+                    text.contains("dismiss") || contentDesc.contains("dismiss") ||
+                    resourceId.contains("decline") || resourceId.contains("reject") ||
+                    resourceId.contains("end") || resourceId.contains("hang") ||
+                    resourceId.contains("cancel") || resourceId.contains("dismiss")) {
+                    
+                    Log.i(TAG, "Trying to click potential decline button:")
+                    Log.i(TAG, "  Text: '$text'")
+                    Log.i(TAG, "  Content Description: '$contentDesc'")
+                    Log.i(TAG, "  Resource ID: '$resourceId'")
+                    
+                    try {
+                        success = node.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        Log.i(TAG, "Click result: $success")
+                        if (success) {
+                            Log.i(TAG, "Alternative decline method succeeded!")
+                            break
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Click failed: ${e.message}")
+                    }
+                }
+            }
+            
+            if (!success) {
+                Log.w(TAG, "All alternative decline methods failed")
+                // Try pressing back button as last resort
+                try {
+                    Log.i(TAG, "Trying back button as last resort...")
+                    performGlobalAction(GLOBAL_ACTION_BACK)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Back button failed: ${e.message}")
                 }
             }
             
         } catch (e: Exception) {
             Log.e(TAG, "Error in alternative decline methods: ${e.message}")
+            e.printStackTrace()
         }
     }
 

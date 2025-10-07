@@ -421,5 +421,19 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  Future<void> testAccessibilityServiceWithLogs() async {
+    print('♿ CallBlockerService: Testing accessibility service with detailed logs...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing accessibility service with detailed logs...');
+    try {
+      await _channel.invokeMethod('testAccessibilityServiceWithLogs');
+      print('✅ CallBlockerService: Accessibility service detailed test completed');
+      _superLogService?.addInfo('CallBlockerService', 'Accessibility service detailed test completed - check logs for comprehensive details');
+    } catch (e) {
+      print('❌ CallBlockerService: Accessibility service detailed test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'Accessibility service detailed test failed', details: e.toString());
+      rethrow;
+    }
+  }
 }
 
