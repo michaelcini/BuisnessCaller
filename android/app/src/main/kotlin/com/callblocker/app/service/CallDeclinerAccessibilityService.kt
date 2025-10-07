@@ -40,7 +40,7 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
             notificationTimeout = 50
             canRetrieveWindowContent = true
         }
-        this.serviceInfo = info
+        serviceInfo = info
         
         Log.i(TAG, "Service configuration updated with enhanced event detection")
     }

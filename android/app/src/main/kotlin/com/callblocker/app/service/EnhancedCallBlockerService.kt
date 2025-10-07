@@ -73,7 +73,7 @@ class EnhancedCallBlockerService : AccessibilityService() {
             notificationTimeout = 50
             canRetrieveWindowContent = true
         }
-        this.serviceInfo = info
+        serviceInfo = info
         
         Log.i(TAG, "Service configured for enhanced call blocking")
     }
