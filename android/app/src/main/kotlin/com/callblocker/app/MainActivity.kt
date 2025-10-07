@@ -809,16 +809,18 @@ class MainActivity: FlutterActivity() {
             
             for (service in enabledServices) {
                 try {
-                    val serviceInfo = service.javaClass.getMethod("getResolveInfo").invoke(service)
-                    val serviceInfoObj = serviceInfo.javaClass.getMethod("getServiceInfo").invoke(serviceInfo)
-                    val packageName = serviceInfoObj.javaClass.getMethod("getPackageName").invoke(serviceInfoObj) as String
-                    val className = serviceInfoObj.javaClass.getMethod("getName").invoke(serviceInfoObj) as String
-                    val serviceId = "$packageName/$className"
+                    val serviceInfo = service?.javaClass?.getMethod("getResolveInfo")?.invoke(service)
+                    val serviceInfoObj = serviceInfo?.javaClass?.getMethod("getServiceInfo")?.invoke(serviceInfo)
+                    val packageName = serviceInfoObj?.javaClass?.getMethod("getPackageName")?.invoke(serviceInfoObj) as? String
+                    val className = serviceInfoObj?.javaClass?.getMethod("getName")?.invoke(serviceInfoObj) as? String
                     
-                    Log.d("MainActivity", "Found enabled service: $serviceId")
-                    if (serviceId == serviceName) {
-                        Log.i("MainActivity", "Accessibility service is ENABLED")
-                        return true
+                    if (packageName != null && className != null) {
+                        val serviceId = "$packageName/$className"
+                        Log.d("MainActivity", "Found enabled service: $serviceId")
+                        if (serviceId == serviceName) {
+                            Log.i("MainActivity", "Accessibility service is ENABLED")
+                            return true
+                        }
                     }
                 } catch (e: Exception) {
                     Log.d("MainActivity", "Error processing service: ${e.message}")
@@ -883,15 +885,17 @@ class MainActivity: FlutterActivity() {
             
             for (service in installedServices) {
                 try {
-                    val serviceInfo = service.javaClass.getMethod("getResolveInfo").invoke(service)
-                    val serviceInfoObj = serviceInfo.javaClass.getMethod("getServiceInfo").invoke(serviceInfo)
-                    val packageName = serviceInfoObj.javaClass.getMethod("getPackageName").invoke(serviceInfoObj) as String
-                    val className = serviceInfoObj.javaClass.getMethod("getName").invoke(serviceInfoObj) as String
-                    val serviceId = "$packageName/$className"
+                    val serviceInfo = service?.javaClass?.getMethod("getResolveInfo")?.invoke(service)
+                    val serviceInfoObj = serviceInfo?.javaClass?.getMethod("getServiceInfo")?.invoke(serviceInfo)
+                    val packageName = serviceInfoObj?.javaClass?.getMethod("getPackageName")?.invoke(serviceInfoObj) as? String
+                    val className = serviceInfoObj?.javaClass?.getMethod("getName")?.invoke(serviceInfoObj) as? String
                     
-                    if (serviceId == serviceName) {
-                        isInstalled = true
-                        break
+                    if (packageName != null && className != null) {
+                        val serviceId = "$packageName/$className"
+                        if (serviceId == serviceName) {
+                            isInstalled = true
+                            break
+                        }
                     }
                 } catch (e: Exception) {
                     Log.d("MainActivity", "Error processing installed service: ${e.message}")
