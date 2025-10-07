@@ -197,10 +197,10 @@ class _EnhancedLogScreenState extends State<EnhancedLogScreen> {
         
         if (filterType == 'levelFilter') {
           currentValue = logService.levelFilter;
-          onChanged = logService.setLevelFilter;
+          onChanged = (String value) => logService.setLevelFilter(value);
         } else {
           currentValue = logService.sourceFilter;
-          onChanged = logService.setSourceFilter;
+          onChanged = (String value) => logService.setSourceFilter(value);
         }
 
         return DropdownButton<String>(
