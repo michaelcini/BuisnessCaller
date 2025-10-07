@@ -1,6 +1,7 @@
 package com.callblocker.app.service
 
 import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -59,21 +60,20 @@ class EnhancedCallBlockerService : AccessibilityService() {
         Log.i(TAG, "Service is now active and monitoring for calls")
         
         // Configure service for maximum compatibility
-        val info = serviceInfo
-        info?.let {
-            it.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
-                           AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
-                           AccessibilityEvent.TYPE_VIEW_CLICKED or
-                           AccessibilityEvent.TYPE_VIEW_FOCUSED or
-                           AccessibilityEvent.TYPE_VIEW_SCROLLED
-            it.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            it.flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                      AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                      AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-            it.notificationTimeout = 50
-            it.canRetrieveWindowContent = true
-            serviceInfo = it
+        val info = AccessibilityServiceInfo().apply {
+            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
+                        AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
+                        AccessibilityEvent.TYPE_VIEW_CLICKED or
+                        AccessibilityEvent.TYPE_VIEW_FOCUSED or
+                        AccessibilityEvent.TYPE_VIEW_SCROLLED
+            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
+            flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
+                   AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
+                   AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
+            notificationTimeout = 50
+            canRetrieveWindowContent = true
         }
+        this.serviceInfo = info
         
         Log.i(TAG, "Service configured for enhanced call blocking")
     }

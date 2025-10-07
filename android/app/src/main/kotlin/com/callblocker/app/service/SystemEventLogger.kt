@@ -83,8 +83,8 @@ class SystemEventLogger(private val context: Context) {
             override fun onReceive(context: Context, intent: Intent) {
                 logSystemEvent("PHONE_STATE", "TELEPHONY", "Phone state changed", mapOf(
                     "action" to (intent.action ?: "unknown"),
-                    "state" to intent.getStringExtra(TelephonyManager.EXTRA_STATE),
-                    "incomingNumber" to intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
+                    "state" to (intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: "unknown"),
+                    "incomingNumber" to (intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER) ?: "unknown")
                 ))
             }
         }
@@ -111,7 +111,7 @@ class SystemEventLogger(private val context: Context) {
         // Screen on/off
         val screenReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                val action = intent.action
+                val action = intent.action ?: "unknown"
                 val screenState = when (action) {
                     Intent.ACTION_SCREEN_ON -> "ON"
                     Intent.ACTION_SCREEN_OFF -> "OFF"
@@ -161,7 +161,7 @@ class SystemEventLogger(private val context: Context) {
             override fun onReceive(context: Context, intent: Intent) {
                 logSystemEvent("PACKAGE", "SYSTEM", "Package changed", mapOf(
                     "action" to (intent.action ?: "unknown"),
-                    "package" to intent.data?.schemeSpecificPart
+                    "package" to (intent.data?.schemeSpecificPart ?: "unknown")
                 ))
             }
         }

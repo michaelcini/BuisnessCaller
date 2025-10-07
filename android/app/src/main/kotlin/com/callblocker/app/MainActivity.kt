@@ -187,13 +187,15 @@ class MainActivity: FlutterActivity() {
         logcatChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "onLogcatData" -> {
-                    val logs = call.argument<List<Map<String, dynamic>>>("logs") ?: emptyList()
+                    @Suppress("UNCHECKED_CAST")
+                    val logs = call.argument<List<Map<String, Any>>>("logs") ?: emptyList()
                     // Forward to Flutter
                     channel.invokeMethod("onLogcatData", mapOf("logs" to logs))
                     result.success(null)
                 }
                 "onSystemEvent" -> {
-                    val events = call.argument<List<Map<String, dynamic>>>("events") ?: emptyList()
+                    @Suppress("UNCHECKED_CAST")
+                    val events = call.argument<List<Map<String, Any>>>("events") ?: emptyList()
                     // Forward to Flutter
                     channel.invokeMethod("onSystemEvent", mapOf("events" to events))
                     result.success(null)

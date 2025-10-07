@@ -96,12 +96,11 @@ class LogcatService(private val context: Context) {
     private fun readLogcatOutput() {
         try {
             val reader = BufferedReader(InputStreamReader(logcatProcess?.inputStream))
-            var line: String?
+            var line: String? = reader.readLine()
 
-            while (isRunning && reader.readLine().also { line = it } != null) {
-                line?.let { logLine ->
-                    parseAndStoreLogEntry(logLine)
-                }
+            while (isRunning && line != null) {
+                parseAndStoreLogEntry(line)
+                line = reader.readLine()
             }
 
             reader.close()
