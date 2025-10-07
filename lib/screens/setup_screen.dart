@@ -529,6 +529,38 @@ class _SetupScreenState extends State<SetupScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Test Enhanced Call Blocker button pressed');
+                              try {
+                                await _callBlockerService.testEnhancedCallBlocker();
+                                _superLogService.addInfo('SetupScreen', 'Test Enhanced Call Blocker completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Enhanced call blocker test completed - check logs for details'),
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test Enhanced Call Blocker failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Enhanced test failed: $e')),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.rocket_launch),
+                            label: const Text('Test Enhanced Call Blocker'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
                               _superLogService.addInfo('SetupScreen', 'Test Call Screening button pressed');
                               try {
                                 await _callBlockerService.testCallScreening();
@@ -603,6 +635,20 @@ class _SetupScreenState extends State<SetupScreen> {
                          label: const Text('Open Super Log'),
                          style: ElevatedButton.styleFrom(
                            backgroundColor: Colors.purple,
+                           foregroundColor: Colors.white,
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: 8),
+                     Expanded(
+                       child: ElevatedButton.icon(
+                         onPressed: () {
+                           Navigator.pushNamed(context, '/enhancedlog');
+                         },
+                         icon: const Icon(Icons.terminal),
+                         label: const Text('Enhanced Logs'),
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: Colors.teal,
                            foregroundColor: Colors.white,
                          ),
                        ),

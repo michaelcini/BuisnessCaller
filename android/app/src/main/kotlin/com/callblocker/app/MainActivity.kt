@@ -17,19 +17,31 @@ import com.callblocker.app.service.CallBlockerService
 import com.callblocker.app.service.DNDService
 import com.callblocker.app.service.CallDeclinerAccessibilityService
 import com.callblocker.app.service.EnhancedCallBlockerService
+import com.callblocker.app.service.LogcatService
+import com.callblocker.app.service.SystemEventLogger
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity: FlutterActivity() {
     private val CHANNEL = "call_blocker_service"
+    private lateinit var logcatService: LogcatService
+    private lateinit var systemEventLogger: SystemEventLogger
     private val PHONE_CHANNEL = "phone_state_receiver"
     private val SMS_CHANNEL = "sms_receiver"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        // Initialize logging services
+        logcatService = LogcatService(this)
+        systemEventLogger = SystemEventLogger(this)
+        
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        logcatService.setMethodChannel(channel)
+        systemEventLogger.setMethodChannel(channel)
+        
+        channel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "startService" -> {
                     startCallBlockerService()
@@ -136,6 +148,30 @@ class MainActivity: FlutterActivity() {
                     val isEnabled = isEnhancedCallBlockerEnabled()
                     result.success(isEnabled)
                 }
+                "startLogcat" -> {
+                    logcatService.startLogcat()
+                    result.success(null)
+                }
+                "stopLogcat" -> {
+                    logcatService.stopLogcat()
+                    result.success(null)
+                }
+                "startSystemEvents" -> {
+                    systemEventLogger.startLogging()
+                    result.success(null)
+                }
+                "stopSystemEvents" -> {
+                    systemEventLogger.stopLogging()
+                    result.success(null)
+                }
+                "getLogStats" -> {
+                    val stats = logcatService.getLogStats()
+                    result.success(stats)
+                }
+                "getSystemEventStats" -> {
+                    val stats = systemEventLogger.getEventStats()
+                    result.success(stats)
+                }
                 else -> {
                     result.notImplemented()
                 }
@@ -145,6 +181,26 @@ class MainActivity: FlutterActivity() {
         // Set up method channels for receivers
         PhoneStateReceiver.methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PHONE_CHANNEL)
         SMSReceiver.methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SMS_CHANNEL)
+        
+        // Set up logcat data receiver
+        val logcatChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "logcat_data")
+        logcatChannel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "onLogcatData" -> {
+                    val logs = call.argument<List<Map<String, dynamic>>>("logs") ?: emptyList()
+                    // Forward to Flutter
+                    channel.invokeMethod("onLogcatData", mapOf("logs" to logs))
+                    result.success(null)
+                }
+                "onSystemEvent" -> {
+                    val events = call.argument<List<Map<String, dynamic>>>("events") ?: emptyList()
+                    // Forward to Flutter
+                    channel.invokeMethod("onSystemEvent", mapOf("events" to events))
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
     }
 
     private fun startCallBlockerService() {

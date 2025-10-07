@@ -9,9 +9,11 @@ import 'screens/privacy_policy_screen.dart';
 import 'screens/log_screen.dart';
 import 'screens/setup_screen.dart';
 import 'screens/super_log_screen.dart';
+import 'screens/enhanced_log_screen.dart';
 import 'services/call_blocker_service.dart';
 import 'services/log_service.dart';
 import 'services/super_log_service.dart';
+import 'services/enhanced_super_log_service.dart';
 import 'domain/app_settings_use_case.dart';
 import 'repositories/app_settings_repository.dart';
 import 'utils/permission_manager.dart';
@@ -58,6 +60,9 @@ class CallBlockerApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<SuperLogService>(
           create: (_) => SuperLogService(),
+        ),
+        ChangeNotifierProvider<EnhancedSuperLogService>(
+          create: (_) => EnhancedSuperLogService(),
         ),
       ],
       child: MaterialApp(
@@ -120,7 +125,8 @@ class CallBlockerApp extends StatelessWidget {
           '/privacy': (context) => const PrivacyPolicyScreen(),
           '/logs': (context) => const LogScreen(),
           '/setup': (context) => const SetupScreen(),
-          '/superlog': (context) => const SuperLogScreen(),
+            '/superlog': (context) => const SuperLogScreen(),
+            '/enhancedlog': (context) => const EnhancedLogScreen(),
         },
       ),
     );

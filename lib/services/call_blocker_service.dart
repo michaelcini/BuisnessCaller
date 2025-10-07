@@ -435,5 +435,29 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  Future<void> testEnhancedCallBlocker() async {
+    print('🚀 CallBlockerService: Testing enhanced call blocker...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing enhanced call blocker...');
+    try {
+      await _channel.invokeMethod('testEnhancedCallBlocker');
+      print('✅ CallBlockerService: Enhanced call blocker test completed');
+      _superLogService?.addInfo('CallBlockerService', 'Enhanced call blocker test completed - check logs for details');
+    } catch (e) {
+      print('❌ CallBlockerService: Enhanced call blocker test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'Enhanced call blocker test failed', details: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<bool> isEnhancedCallBlockerEnabled() async {
+    try {
+      final result = await _channel.invokeMethod('isEnhancedCallBlockerEnabled');
+      return result == true;
+    } catch (e) {
+      _superLogService?.addError('CallBlockerService', 'Failed to check enhanced call blocker status', details: e.toString());
+      return false;
+    }
+  }
 }
 
