@@ -84,6 +84,19 @@
                 android:resource="@xml/accessibility_service_config" />
         </service>
 
+        <!-- Enhanced Call Blocker Service -->
+        <service
+            android:name=".service.EnhancedCallBlockerService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/enhanced_accessibility_service_config" />
+        </service>
+
         <!-- Phone State Receiver -->
         <receiver
             android:name=".receiver.PhoneStateReceiver"

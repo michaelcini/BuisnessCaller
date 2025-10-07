@@ -22,6 +22,7 @@
     
     <!-- Accessibility Service -->
     <string name="accessibility_service_description">Call Blocker Accessibility Service - Automatically declines calls during non-business hours and sends SMS replies</string>
+    <string name="enhanced_accessibility_service_description">Enhanced Call Blocker - Advanced call blocking with multiple detection methods and improved compatibility</string>
     
     <!-- Battery Optimization -->
     <string name="battery_optimization_title">Battery Optimization</string>

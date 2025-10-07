@@ -16,6 +16,7 @@ import com.callblocker.app.receiver.SMSReceiver
 import com.callblocker.app.service.CallBlockerService
 import com.callblocker.app.service.DNDService
 import com.callblocker.app.service.CallDeclinerAccessibilityService
+import com.callblocker.app.service.EnhancedCallBlockerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -126,6 +127,14 @@ class MainActivity: FlutterActivity() {
                 "testAccessibilityServiceWithLogs" -> {
                     testAccessibilityServiceWithLogs()
                     result.success(null)
+                }
+                "testEnhancedCallBlocker" -> {
+                    testEnhancedCallBlocker()
+                    result.success(null)
+                }
+                "isEnhancedCallBlockerEnabled" -> {
+                    val isEnabled = isEnhancedCallBlockerEnabled()
+                    result.success(isEnabled)
                 }
                 else -> {
                     result.notImplemented()
@@ -991,6 +1000,132 @@ class MainActivity: FlutterActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "Error testing accessibility service: ${e.message}")
             e.printStackTrace()
+        }
+    }
+
+    private fun testEnhancedCallBlocker() {
+        Log.i("MainActivity", "=== TESTING ENHANCED CALL BLOCKER ===")
+        
+        try {
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            val packageName = packageName
+            
+            Log.i("MainActivity", "Package name: $packageName")
+            Log.i("MainActivity", "Accessibility manager: $accessibilityManager")
+            
+            // Check if accessibility is enabled
+            val isAccessibilityEnabled = accessibilityManager.isEnabled
+            Log.i("MainActivity", "Accessibility is enabled: $isAccessibilityEnabled")
+            
+            if (!isAccessibilityEnabled) {
+                Log.e("MainActivity", "Accessibility is not enabled on this device!")
+                return
+            }
+            
+            // Check if enhanced service is installed
+            val method = accessibilityManager.javaClass.getMethod("getInstalledAccessibilityServiceList")
+            val installedServices = method.invoke(accessibilityManager) as List<*>
+            
+            Log.i("MainActivity", "Total installed accessibility services: ${installedServices.size}")
+            
+            val serviceName = "${packageName}/${EnhancedCallBlockerService::class.java.name}"
+            Log.i("MainActivity", "Looking for enhanced service: $serviceName")
+            
+            var isInstalled = false
+            for (i in installedServices.indices) {
+                val service = installedServices[i]
+                try {
+                    val serviceInfo = service?.javaClass?.getMethod("getResolveInfo")?.invoke(service)
+                    val serviceInfoObj = serviceInfo?.javaClass?.getMethod("getServiceInfo")?.invoke(serviceInfo)
+                    val packageName = serviceInfoObj?.javaClass?.getMethod("getPackageName")?.invoke(serviceInfoObj) as? String
+                    val className = serviceInfoObj?.javaClass?.getMethod("getName")?.invoke(serviceInfoObj) as? String
+                    
+                    if (packageName != null && className != null) {
+                        val serviceId = "$packageName/$className"
+                        Log.d("MainActivity", "Service $i: $serviceId")
+                        if (serviceId == serviceName) {
+                            isInstalled = true
+                            Log.i("MainActivity", "Found enhanced service at index $i")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.d("MainActivity", "Error processing service $i: ${e.message}")
+                }
+            }
+            
+            Log.i("MainActivity", "Enhanced service installed: $isInstalled")
+            
+            if (!isInstalled) {
+                Log.e("MainActivity", "Enhanced service is not properly installed!")
+                return
+            }
+            
+            // Check if service is enabled
+            val isEnabled = isEnhancedCallBlockerEnabled()
+            Log.i("MainActivity", "Enhanced service enabled: $isEnabled")
+            
+            if (!isEnabled) {
+                Log.w("MainActivity", "Enhanced service is not enabled! Please enable it in accessibility settings.")
+                return
+            }
+            
+            Log.i("MainActivity", "Enhanced call blocker test completed successfully!")
+            Log.i("MainActivity", "The enhanced service should now be monitoring for incoming calls...")
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error testing enhanced call blocker: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+
+    private fun isEnhancedCallBlockerEnabled(): Boolean {
+        Log.i("MainActivity", "=== CHECKING ENHANCED CALL BLOCKER STATUS ===")
+        
+        try {
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            val packageName = packageName
+            
+            // Check if accessibility is enabled
+            val isAccessibilityEnabled = accessibilityManager.isEnabled
+            Log.i("MainActivity", "Accessibility enabled: $isAccessibilityEnabled")
+            if (!isAccessibilityEnabled) {
+                Log.w("MainActivity", "Accessibility is not enabled")
+                return false
+            }
+            
+            // Get enabled services using reflection
+            val method = accessibilityManager.javaClass.getMethod("getEnabledAccessibilityServiceList", Int::class.java)
+            val enabledServices = method.invoke(accessibilityManager, 0xFFFFFFFF) as List<*>
+            
+            val serviceName = "${packageName}/${EnhancedCallBlockerService::class.java.name}"
+            Log.i("MainActivity", "Looking for enhanced service: $serviceName")
+            
+            for (service in enabledServices) {
+                try {
+                    val serviceInfo = service?.javaClass?.getMethod("getResolveInfo")?.invoke(service)
+                    val serviceInfoObj = serviceInfo?.javaClass?.getMethod("getServiceInfo")?.invoke(serviceInfo)
+                    val packageName = serviceInfoObj?.javaClass?.getMethod("getPackageName")?.invoke(serviceInfoObj) as? String
+                    val className = serviceInfoObj?.javaClass?.getMethod("getName")?.invoke(serviceInfoObj) as? String
+                    
+                    if (packageName != null && className != null) {
+                        val serviceId = "$packageName/$className"
+                        Log.d("MainActivity", "Found enabled service: $serviceId")
+                        if (serviceId == serviceName) {
+                            Log.i("MainActivity", "Enhanced call blocker is ENABLED")
+                            return true
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.d("MainActivity", "Error processing service: ${e.message}")
+                }
+            }
+            
+            Log.w("MainActivity", "Enhanced call blocker is NOT ENABLED")
+            return false
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking enhanced call blocker: ${e.message}")
+            return false
         }
     }
 }

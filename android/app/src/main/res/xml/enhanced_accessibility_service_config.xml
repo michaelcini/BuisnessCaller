@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged|typeViewClicked|typeViewFocused|typeViewScrolled"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds|flagRequestFilterKeyEvents"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/enhanced_accessibility_service_description"
+    android:notificationTimeout="50"
+    android:packageNames="com.android.incallui,com.android.phone,com.samsung.android.incallui,com.google.android.dialer,com.oneplus.incallui,com.miui.incallui,com.huawei.incallui,com.oppo.incallui,com.vivo.incallui,com.realme.incallui,com.android.dialer,com.android.server.telecom,com.android.telecom" />
