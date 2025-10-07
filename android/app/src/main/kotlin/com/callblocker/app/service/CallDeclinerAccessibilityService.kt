@@ -29,18 +29,13 @@ class CallDeclinerAccessibilityService : AccessibilityService() {
         Log.i(TAG, "- Feedback type: ${serviceInfo?.feedbackType}")
         Log.i(TAG, "- Flags: ${serviceInfo?.flags}")
         
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or 
-                        AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
-                        AccessibilityEvent.TYPE_VIEW_CLICKED or
-                        AccessibilityEvent.TYPE_VIEW_FOCUSED
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                   AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-            notificationTimeout = 50
-            canRetrieveWindowContent = true
-        }
-        serviceInfo = info
+        // Log service configuration (serviceInfo is read-only in AccessibilityService)
+        Log.i(TAG, "Service configuration:")
+        Log.i(TAG, "- Event types: ${AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_FOCUSED}")
+        Log.i(TAG, "- Feedback type: ${AccessibilityServiceInfo.FEEDBACK_GENERIC}")
+        Log.i(TAG, "- Flags: ${AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS}")
+        Log.i(TAG, "- Notification timeout: 50")
+        Log.i(TAG, "- Can retrieve window content: true")
         
         Log.i(TAG, "Service configuration updated with enhanced event detection")
     }

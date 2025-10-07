@@ -59,21 +59,13 @@ class EnhancedCallBlockerService : AccessibilityService() {
         Log.i(TAG, "=== ENHANCED CALL BLOCKER SERVICE CONNECTED ===")
         Log.i(TAG, "Service is now active and monitoring for calls")
         
-        // Configure service for maximum compatibility
-        val info = AccessibilityServiceInfo().apply {
-            eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
-                        AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
-                        AccessibilityEvent.TYPE_VIEW_CLICKED or
-                        AccessibilityEvent.TYPE_VIEW_FOCUSED or
-                        AccessibilityEvent.TYPE_VIEW_SCROLLED
-            feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
-            flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or
-                   AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
-                   AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-            notificationTimeout = 50
-            canRetrieveWindowContent = true
-        }
-        serviceInfo = info
+        // Log service configuration (serviceInfo is read-only in AccessibilityService)
+        Log.i(TAG, "Service configuration:")
+        Log.i(TAG, "- Event types: ${AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or AccessibilityEvent.TYPE_VIEW_CLICKED or AccessibilityEvent.TYPE_VIEW_FOCUSED or AccessibilityEvent.TYPE_VIEW_SCROLLED}")
+        Log.i(TAG, "- Feedback type: ${AccessibilityServiceInfo.FEEDBACK_GENERIC}")
+        Log.i(TAG, "- Flags: ${AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS or AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS}")
+        Log.i(TAG, "- Notification timeout: 50")
+        Log.i(TAG, "- Can retrieve window content: true")
         
         Log.i(TAG, "Service configured for enhanced call blocking")
     }
