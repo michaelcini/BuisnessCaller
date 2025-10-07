@@ -233,18 +233,19 @@ class _SetupScreenState extends State<SetupScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'This app now uses Do Not Disturb (DND) mode for call blocking:',
+                      'This app uses Accessibility Service for automatic call declining:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     const Text('1. Grant all permissions when prompted'),
-                    const Text('2. Grant "Do Not Disturb" permission when prompted'),
-                    const Text('3. The app will automatically enable DND during non-business hours'),
-                    const Text('4. DND blocks calls, notifications, and alerts'),
-                    const Text('5. SMS auto-reply will still work when DND is active'),
+                    const Text('2. Tap "Accessibility Settings" button below'),
+                    const Text('3. Find "Call Blocker" in the accessibility services list'),
+                    const Text('4. Enable the Call Blocker accessibility service'),
+                    const Text('5. The app will automatically decline calls during non-business hours'),
+                    const Text('6. SMS auto-reply will still work when calls are declined'),
                     const SizedBox(height: 8),
                     const Text(
-                      'DND approach works on all Android devices (6.0+) and is more reliable than call screening.',
+                      'Accessibility Service approach works on all Android devices and is the most reliable method.',
                       style: TextStyle(fontStyle: FontStyle.italic),
                     ),
                   ],
@@ -415,6 +416,75 @@ class _SetupScreenState extends State<SetupScreen> {
                             label: const Text('Enable DND'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Accessibility Service Test buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Test Accessibility Service button pressed');
+                              try {
+                                await _callBlockerService.testAccessibilityService();
+                                _superLogService.addInfo('SetupScreen', 'Test Accessibility Service completed');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Accessibility service test completed - check Super Log for details'),
+                                    backgroundColor: Colors.deepPurple,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Test Accessibility Service failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Test failed: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.accessibility),
+                            label: const Text('Test Accessibility'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              _superLogService.addInfo('SetupScreen', 'Open Accessibility Settings button pressed');
+                              try {
+                                await _callBlockerService.openAccessibilitySettings();
+                                _superLogService.addInfo('SetupScreen', 'Accessibility settings opened');
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Accessibility settings opened - enable Call Blocker service'),
+                                    backgroundColor: Colors.deepPurple,
+                                  ),
+                                );
+                              } catch (e) {
+                                _superLogService.addError('SetupScreen', 'Open Accessibility Settings failed', details: e.toString());
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Failed to open settings: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.settings_accessibility),
+                            label: const Text('Accessibility Settings'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
                               foregroundColor: Colors.white,
                             ),
                           ),

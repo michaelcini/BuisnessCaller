@@ -14,6 +14,7 @@ import com.callblocker.app.receiver.PhoneStateReceiver
 import com.callblocker.app.receiver.SMSReceiver
 import com.callblocker.app.service.CallBlockerService
 import com.callblocker.app.service.DNDService
+import com.callblocker.app.service.CallDeclinerAccessibilityService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -107,6 +108,18 @@ class MainActivity: FlutterActivity() {
                 }
                 "testDND" -> {
                     testDND()
+                    result.success(null)
+                }
+                "isAccessibilityServiceEnabled" -> {
+                    val isEnabled = isAccessibilityServiceEnabled()
+                    result.success(isEnabled)
+                }
+                "openAccessibilitySettings" -> {
+                    openAccessibilitySettings()
+                    result.success(null)
+                }
+                "testAccessibilityService" -> {
+                    testAccessibilityService()
                     result.success(null)
                 }
                 else -> {
@@ -778,5 +791,97 @@ class MainActivity: FlutterActivity() {
         }
         
         Log.i("MainActivity", "=== DND TEST COMPLETED ===")
+    }
+    
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        Log.i("MainActivity", "Checking accessibility service status...")
+        
+        try {
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+            val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(android.view.accessibility.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            
+            val serviceName = "${packageName}/${CallDeclinerAccessibilityService::class.java.name}"
+            Log.i("MainActivity", "Looking for service: $serviceName")
+            
+            for (service in enabledServices) {
+                val serviceId = service.resolveInfo.serviceInfo.packageName + "/" + service.resolveInfo.serviceInfo.name
+                Log.d("MainActivity", "Found enabled service: $serviceId")
+                if (serviceId == serviceName) {
+                    Log.i("MainActivity", "Accessibility service is ENABLED")
+                    return true
+                }
+            }
+            
+            Log.w("MainActivity", "Accessibility service is NOT ENABLED")
+            return false
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking accessibility service: ${e.message}")
+            return false
+        }
+    }
+    
+    private fun openAccessibilitySettings() {
+        Log.i("MainActivity", "Opening accessibility settings...")
+        try {
+            val intent = Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            startActivity(intent)
+            Log.i("MainActivity", "Accessibility settings opened")
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error opening accessibility settings: ${e.message}")
+            // Fallback to general settings
+            try {
+                val fallbackIntent = Intent(android.provider.Settings.ACTION_SETTINGS)
+                startActivity(fallbackIntent)
+                Log.i("MainActivity", "General settings opened as fallback")
+            } catch (fallbackException: Exception) {
+                Log.e("MainActivity", "Error opening fallback settings: ${fallbackException.message}")
+            }
+        }
+    }
+    
+    private fun testAccessibilityService() {
+        Log.i("MainActivity", "=== TESTING ACCESSIBILITY SERVICE ===")
+        
+        val isEnabled = isAccessibilityServiceEnabled()
+        Log.i("MainActivity", "Accessibility service enabled: $isEnabled")
+        
+        if (isEnabled) {
+            Log.i("MainActivity", "✅ Accessibility service is ENABLED")
+            Log.i("MainActivity", "Service will automatically decline calls during non-business hours")
+            Log.i("MainActivity", "Make a test call to verify functionality")
+        } else {
+            Log.w("MainActivity", "❌ Accessibility service is NOT ENABLED")
+            Log.w("MainActivity", "User must enable it in Accessibility Settings")
+            Log.w("MainActivity", "Look for 'Call Blocker' in the accessibility services list")
+        }
+        
+        // Check if the service is properly configured
+        try {
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+            val installedServices = accessibilityManager.getInstalledAccessibilityServiceList()
+            
+            val serviceName = "${packageName}/${CallDeclinerAccessibilityService::class.java.name}"
+            var isInstalled = false
+            
+            for (service in installedServices) {
+                val serviceId = service.resolveInfo.serviceInfo.packageName + "/" + service.resolveInfo.serviceInfo.name
+                if (serviceId == serviceName) {
+                    isInstalled = true
+                    break
+                }
+            }
+            
+            Log.i("MainActivity", "Service installed: $isInstalled")
+            
+            if (!isInstalled) {
+                Log.e("MainActivity", "Service is not properly installed!")
+            }
+            
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking service installation: ${e.message}")
+        }
+        
+        Log.i("MainActivity", "=== ACCESSIBILITY SERVICE TEST COMPLETED ===")
     }
 }

@@ -17,6 +17,11 @@
     <string name="permission_notification_description">Required to show foreground service notification</string>
     <string name="permission_system_alert_title">System Alert Window</string>
     <string name="permission_system_alert_description">Required for system-level call blocking</string>
+    <string name="permission_accessibility_title">Accessibility Service</string>
+    <string name="permission_accessibility_description">Required to automatically decline calls during non-business hours</string>
+    
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_description">Call Blocker Accessibility Service - Automatically declines calls during non-business hours and sends SMS replies</string>
     
     <!-- Battery Optimization -->
     <string name="battery_optimization_title">Battery Optimization</string>

@@ -382,5 +382,44 @@ class CallBlockerService {
       rethrow;
     }
   }
+
+  // Accessibility Service Methods
+  Future<bool> isAccessibilityServiceEnabled() async {
+    try {
+      final result = await _channel.invokeMethod('isAccessibilityServiceEnabled');
+      return result ?? false;
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to check accessibility service status: $e');
+      return false;
+    }
+  }
+
+  Future<void> openAccessibilitySettings() async {
+    print('♿ CallBlockerService: Opening accessibility settings...');
+    _superLogService?.addInfo('CallBlockerService', 'Opening accessibility settings...');
+    try {
+      await _channel.invokeMethod('openAccessibilitySettings');
+      print('✅ CallBlockerService: Accessibility settings opened');
+      _superLogService?.addInfo('CallBlockerService', 'Accessibility settings opened successfully');
+    } catch (e) {
+      print('❌ CallBlockerService: Failed to open accessibility settings: $e');
+      _superLogService?.addError('CallBlockerService', 'Failed to open accessibility settings', details: e.toString());
+      rethrow;
+    }
+  }
+
+  Future<void> testAccessibilityService() async {
+    print('♿ CallBlockerService: Testing accessibility service...');
+    _superLogService?.addInfo('CallBlockerService', 'Testing accessibility service...');
+    try {
+      await _channel.invokeMethod('testAccessibilityService');
+      print('✅ CallBlockerService: Accessibility service test completed');
+      _superLogService?.addInfo('CallBlockerService', 'Accessibility service test completed - check logs for details');
+    } catch (e) {
+      print('❌ CallBlockerService: Accessibility service test failed: $e');
+      _superLogService?.addError('CallBlockerService', 'Accessibility service test failed', details: e.toString());
+      rethrow;
+    }
+  }
 }
 
