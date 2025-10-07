@@ -193,14 +193,18 @@ class _EnhancedLogScreenState extends State<EnhancedLogScreen> {
     return Consumer<EnhancedSuperLogService>(
       builder: (context, logService, child) {
         String currentValue;
-        Function(String) onChanged;
+        void Function(String?)? onChanged;
         
         if (filterType == 'levelFilter') {
           currentValue = logService.levelFilter;
-          onChanged = (String value) => logService.setLevelFilter(value);
+          onChanged = (String? value) {
+            if (value != null) logService.setLevelFilter(value);
+          };
         } else {
           currentValue = logService.sourceFilter;
-          onChanged = (String value) => logService.setSourceFilter(value);
+          onChanged = (String? value) {
+            if (value != null) logService.setSourceFilter(value);
+          };
         }
 
         return DropdownButton<String>(
