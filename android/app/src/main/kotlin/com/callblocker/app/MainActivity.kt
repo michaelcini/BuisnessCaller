@@ -9,7 +9,7 @@ import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.telecom.TelecomManager
 import android.util.Log
-import android.view.accessibility.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
 import androidx.annotation.NonNull
 import com.callblocker.app.receiver.PhoneStateReceiver
 import com.callblocker.app.receiver.SMSReceiver
@@ -798,18 +798,30 @@ class MainActivity: FlutterActivity() {
         Log.i("MainActivity", "Checking accessibility service status...")
         
         try {
-            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
-            val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(android.view.accessibility.AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            
+            // Use reflection to access the method for better compatibility
+            val method = accessibilityManager.javaClass.getMethod("getEnabledAccessibilityServiceList", Int::class.java)
+            val enabledServices = method.invoke(accessibilityManager, 0xFFFFFFFF) as List<*>
             
             val serviceName = "${packageName}/${CallDeclinerAccessibilityService::class.java.name}"
             Log.i("MainActivity", "Looking for service: $serviceName")
             
             for (service in enabledServices) {
-                val serviceId = service.resolveInfo.serviceInfo.packageName + "/" + service.resolveInfo.serviceInfo.name
-                Log.d("MainActivity", "Found enabled service: $serviceId")
-                if (serviceId == serviceName) {
-                    Log.i("MainActivity", "Accessibility service is ENABLED")
-                    return true
+                try {
+                    val serviceInfo = service.javaClass.getMethod("getResolveInfo").invoke(service)
+                    val serviceInfoObj = serviceInfo.javaClass.getMethod("getServiceInfo").invoke(serviceInfo)
+                    val packageName = serviceInfoObj.javaClass.getMethod("getPackageName").invoke(serviceInfoObj) as String
+                    val className = serviceInfoObj.javaClass.getMethod("getName").invoke(serviceInfoObj) as String
+                    val serviceId = "$packageName/$className"
+                    
+                    Log.d("MainActivity", "Found enabled service: $serviceId")
+                    if (serviceId == serviceName) {
+                        Log.i("MainActivity", "Accessibility service is ENABLED")
+                        return true
+                    }
+                } catch (e: Exception) {
+                    Log.d("MainActivity", "Error processing service: ${e.message}")
                 }
             }
             
@@ -818,6 +830,7 @@ class MainActivity: FlutterActivity() {
             
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking accessibility service: ${e.message}")
+            // Fallback: assume not enabled if we can't check
             return false
         }
     }
@@ -859,17 +872,29 @@ class MainActivity: FlutterActivity() {
         
         // Check if the service is properly configured
         try {
-            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
-            val installedServices = accessibilityManager.getInstalledAccessibilityServiceList()
+            val accessibilityManager = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+            
+            // Use reflection to access installed services
+            val method = accessibilityManager.javaClass.getMethod("getInstalledAccessibilityServiceList")
+            val installedServices = method.invoke(accessibilityManager) as List<*>
             
             val serviceName = "${packageName}/${CallDeclinerAccessibilityService::class.java.name}"
             var isInstalled = false
             
             for (service in installedServices) {
-                val serviceId = service.resolveInfo.serviceInfo.packageName + "/" + service.resolveInfo.serviceInfo.name
-                if (serviceId == serviceName) {
-                    isInstalled = true
-                    break
+                try {
+                    val serviceInfo = service.javaClass.getMethod("getResolveInfo").invoke(service)
+                    val serviceInfoObj = serviceInfo.javaClass.getMethod("getServiceInfo").invoke(serviceInfo)
+                    val packageName = serviceInfoObj.javaClass.getMethod("getPackageName").invoke(serviceInfoObj) as String
+                    val className = serviceInfoObj.javaClass.getMethod("getName").invoke(serviceInfoObj) as String
+                    val serviceId = "$packageName/$className"
+                    
+                    if (serviceId == serviceName) {
+                        isInstalled = true
+                        break
+                    }
+                } catch (e: Exception) {
+                    Log.d("MainActivity", "Error processing installed service: ${e.message}")
                 }
             }
             
