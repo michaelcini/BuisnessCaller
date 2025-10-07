@@ -239,6 +239,7 @@ class CallBlockerService {
     print('🧪 CallBlockerService: Testing call screening setup...');
     _superLogService?.addInfo('CallBlockerService', 'Starting call screening test...');
     try {
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreening method...');
       await _channel.invokeMethod('testCallScreening');
       print('✅ CallBlockerService: Call screening test completed');
       _superLogService?.addInfo('CallBlockerService', 'Call screening test completed successfully');
@@ -282,11 +283,55 @@ class CallBlockerService {
 
   Future<void> testCallScreeningService() async {
     print('🔍 CallBlockerService: Testing CallScreeningService activation...');
+    print('SuperLogService available: ${_superLogService != null}');
+    
     _superLogService?.addInfo('CallBlockerService', 'Testing CallScreeningService activation...');
     try {
-      await _channel.invokeMethod('testCallScreeningService');
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreeningService method...');
+      final results = await _channel.invokeMethod('testCallScreeningService') as Map<dynamic, dynamic>?;
+      
+      print('Received results from native: $results');
+      _superLogService?.addInfo('CallBlockerService', 'Received results from native: $results');
+      
+      if (results != null) {
+        _superLogService?.addInfo('CallBlockerService', '=== CALL SCREENING SERVICE TEST RESULTS ===');
+        _superLogService?.addInfo('CallBlockerService', 'Package: ${results['packageName']}');
+        _superLogService?.addInfo('CallBlockerService', 'Android Version: ${results['androidVersion']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Registered: ${results['serviceRegistered']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Enabled: ${results['serviceEnabled']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Exported: ${results['serviceExported']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Name: ${results['serviceName']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Package: ${results['servicePackage']}');
+        _superLogService?.addInfo('CallBlockerService', 'Service Start Success: ${results['serviceStartSuccess']}');
+        if (results['serviceStartError'] != null) {
+          _superLogService?.addError('CallBlockerService', 'Service Start Error: ${results['serviceStartError']}');
+        }
+        _superLogService?.addInfo('CallBlockerService', 'Is Default App: ${results['isDefaultApp']}');
+        _superLogService?.addInfo('CallBlockerService', 'Final Status: ${results['finalStatus']}');
+        
+        // Add status interpretation
+        final status = results['finalStatus'] as String?;
+        switch (status) {
+          case 'WORKING':
+            _superLogService?.addInfo('CallBlockerService', '🎉 EVERYTHING IS WORKING! Call screening should work!');
+            break;
+          case 'NOT_DEFAULT':
+            _superLogService?.addWarning('CallBlockerService', '⚠️ Service is registered but NOT set as default');
+            _superLogService?.addWarning('CallBlockerService', 'Go to Settings > Apps > Default Apps > Call Screening App');
+            break;
+          case 'NOT_REGISTERED':
+            _superLogService?.addError('CallBlockerService', '❌ Service is not registered - check AndroidManifest.xml');
+            break;
+          default:
+            _superLogService?.addWarning('CallBlockerService', '⚠️ Unknown status: $status');
+        }
+        
+        _superLogService?.addInfo('CallBlockerService', '=== TEST RESULTS COMPLETED ===');
+      } else {
+        _superLogService?.addWarning('CallBlockerService', 'No results received from native method');
+      }
+      
       print('✅ CallBlockerService: CallScreeningService test completed');
-      _superLogService?.addInfo('CallBlockerService', 'CallScreeningService test completed - check logs for details');
     } catch (e) {
       print('❌ CallBlockerService: CallScreeningService test failed: $e');
       _superLogService?.addError('CallBlockerService', 'CallScreeningService test failed', details: e.toString());
@@ -298,6 +343,7 @@ class CallBlockerService {
     print('📞 CallBlockerService: Testing call screening with fake call...');
     _superLogService?.addInfo('CallBlockerService', 'Testing call screening with fake call...');
     try {
+      _superLogService?.addInfo('CallBlockerService', 'Invoking native testCallScreeningWithFakeCall method...');
       await _channel.invokeMethod('testCallScreeningWithFakeCall');
       print('✅ CallBlockerService: Fake call test completed');
       _superLogService?.addInfo('CallBlockerService', 'Fake call test completed - check logs for service creation');

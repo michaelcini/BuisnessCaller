@@ -26,7 +26,8 @@ class MainActivity: FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        val methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
                 "startService" -> {
                     startCallBlockerService()
@@ -78,8 +79,8 @@ class MainActivity: FlutterActivity() {
                     result.success(null)
                 }
                 "testCallScreeningService" -> {
-                    testCallScreeningService()
-                    result.success(null)
+                    val testResults = testCallScreeningServiceWithResults()
+                    result.success(testResults)
                 }
                 "testCallScreeningWithFakeCall" -> {
                     testCallScreeningWithFakeCall()
@@ -242,6 +243,7 @@ class MainActivity: FlutterActivity() {
         return try {
             Log.i("MainActivity", "=== CALL SCREENING STATUS CHECK ===")
             Log.i("MainActivity", "Our package name: $packageName")
+            Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
             
             // Check if service is registered
             val packageManager = packageManager
@@ -254,108 +256,139 @@ class MainActivity: FlutterActivity() {
             
             if (!isRegistered) {
                 Log.w("MainActivity", "Call screening service is NOT REGISTERED")
+                Log.w("MainActivity", "This means the service is not properly declared in AndroidManifest.xml")
                 return false
             }
             
-        // Check if we're the default call screening app (Android 10+)
-        var isDefault = false
-        try {
+            // For Android 10+, check if we're the default call screening app
+            var isDefault = false
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
-                var defaultApp: String? = null
-                
-                Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
-                Log.i("MainActivity", "Our package: $packageName")
-                
-                // Try multiple methods to check if we're the default call screening app
-                try {
-                    // Method 1: Use reflection (works on Android 10+)
-                    try {
-                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                        defaultApp = method.invoke(telecomManager) as String?
-                        isDefault = defaultApp == packageName
-                        Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
-                        Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
-                    } catch (reflectionException: Exception) {
-                        Log.w("MainActivity", "Method 1 failed: ${reflectionException.message}")
-                        
-                        // Method 2: Check via Settings (Android 11+ specific)
-                        try {
-                            val settingsValue = android.provider.Settings.Secure.getString(
-                                contentResolver, 
-                                "call_screening_app"
-                            )
-                            defaultApp = settingsValue
-                            isDefault = settingsValue == packageName
-                            Log.i("MainActivity", "Method 2 - Settings call_screening_app: $settingsValue")
-                            Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
-                        } catch (settingsException: Exception) {
-                            Log.w("MainActivity", "Method 2 failed: ${settingsException.message}")
-                            
-                            // Method 3: Check via another settings key
-                            try {
-                                val settingsValue2 = android.provider.Settings.Secure.getString(
-                                    contentResolver, 
-                                    "default_call_screening_app"
-                                )
-                                defaultApp = settingsValue2
-                                isDefault = settingsValue2 == packageName
-                                Log.i("MainActivity", "Method 3 - Settings default_call_screening_app: $settingsValue2")
-                                Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
-                            } catch (settingsException2: Exception) {
-                                Log.w("MainActivity", "Method 3 failed: ${settingsException2.message}")
-                                
-                                // Method 4: For Android 11+, check if we can access the property directly
-                                try {
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                                        // Android 11+ might have the property available
-                                        val field = telecomManager.javaClass.getDeclaredField("mDefaultCallScreeningApp")
-                                        field.isAccessible = true
-                                        val fieldValue = field.get(telecomManager) as String?
-                                        defaultApp = fieldValue
-                                        isDefault = fieldValue == packageName
-                                        Log.i("MainActivity", "Method 4 - Field mDefaultCallScreeningApp: $fieldValue")
-                                        Log.i("MainActivity", "Method 4 - Is our app default: $isDefault")
-                                    } else {
-                                        Log.i("MainActivity", "Method 4 - Android version too old for field access")
-                                        isDefault = false
-                                    }
-                                } catch (fieldException: Exception) {
-                                    Log.w("MainActivity", "Method 4 failed: ${fieldException.message}")
-                                    
-                                    // Method 5: Check if the service is actually being called
-                                    // If we can't determine the default app, assume we're not it
-                                    // but log that the service is registered
-                                    Log.w("MainActivity", "Could not determine default call screening app")
-                                    Log.w("MainActivity", "Service is registered, but default status unknown")
-                                    isDefault = false
-                                }
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
-                    isDefault = false
-                }
+                isDefault = checkIfDefaultCallScreeningApp()
             } else {
-                Log.i("MainActivity", "Android version < 10, default call screening not available")
-                isDefault = true // For older versions, just being registered is enough
+                // For older versions, just being registered is enough
+                isDefault = true
+                Log.i("MainActivity", "Android version < 10, service registration is sufficient")
             }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
-        }
             
-            if (isRegistered && isDefault) {
-                Log.i("MainActivity", "Call screening is FULLY ENABLED")
+            val finalResult = isRegistered && isDefault
+            
+            if (finalResult) {
+                Log.i("MainActivity", "✅ Call screening is FULLY ENABLED")
+                Log.i("MainActivity", "Service is registered AND set as default")
             } else if (isRegistered && !isDefault) {
-                Log.w("MainActivity", "Service registered but NOT set as default")
+                Log.w("MainActivity", "⚠️ Service registered but NOT set as default")
                 Log.w("MainActivity", "User must set this app as default call screening app")
+                Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+            } else if (!isRegistered) {
+                Log.e("MainActivity", "❌ Service is NOT registered")
+                Log.e("MainActivity", "Check AndroidManifest.xml for CallScreeningService declaration")
             }
             
-            isRegistered && isDefault
+            finalResult
         } catch (e: Exception) {
             Log.e("MainActivity", "Error checking call screening status: ${e.message}")
             e.printStackTrace()
+            false
+        }
+    }
+    
+    private fun checkIfDefaultCallScreeningApp(): Boolean {
+        return try {
+            val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
+            var isDefault = false
+            var defaultApp: String? = null
+            
+            Log.i("MainActivity", "Checking if we're the default call screening app...")
+            
+            // Method 1: Try reflection for getDefaultCallScreeningApp (Android 10+)
+            try {
+                val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
+                defaultApp = method.invoke(telecomManager) as String?
+                isDefault = defaultApp == packageName
+                Log.i("MainActivity", "Method 1 (Reflection) - Default app: $defaultApp, Is ours: $isDefault")
+                
+                if (isDefault) {
+                    Log.i("MainActivity", "✅ Method 1 confirmed we are the default app")
+                    return true
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Method 1 (Reflection) failed: ${e.message}")
+            }
+            
+            // Method 2: Check Settings.Secure for call_screening_app (Android 11+)
+            try {
+                val settingsValue = android.provider.Settings.Secure.getString(
+                    contentResolver, 
+                    "call_screening_app"
+                )
+                defaultApp = settingsValue
+                isDefault = settingsValue == packageName
+                Log.i("MainActivity", "Method 2 (Settings) - call_screening_app: $settingsValue, Is ours: $isDefault")
+                
+                if (isDefault) {
+                    Log.i("MainActivity", "✅ Method 2 confirmed we are the default app")
+                    return true
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Method 2 (Settings call_screening_app) failed: ${e.message}")
+            }
+            
+            // Method 3: Check Settings.Secure for default_call_screening_app
+            try {
+                val settingsValue = android.provider.Settings.Secure.getString(
+                    contentResolver, 
+                    "default_call_screening_app"
+                )
+                defaultApp = settingsValue
+                isDefault = settingsValue == packageName
+                Log.i("MainActivity", "Method 3 (Settings) - default_call_screening_app: $settingsValue, Is ours: $isDefault")
+                
+                if (isDefault) {
+                    Log.i("MainActivity", "✅ Method 3 confirmed we are the default app")
+                    return true
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Method 3 (Settings default_call_screening_app) failed: ${e.message}")
+            }
+            
+            // Method 4: For Android 11+, try to access private field
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                try {
+                    val field = telecomManager.javaClass.getDeclaredField("mDefaultCallScreeningApp")
+                    field.isAccessible = true
+                    val fieldValue = field.get(telecomManager) as String?
+                    defaultApp = fieldValue
+                    isDefault = fieldValue == packageName
+                    Log.i("MainActivity", "Method 4 (Private Field) - mDefaultCallScreeningApp: $fieldValue, Is ours: $isDefault")
+                    
+                    if (isDefault) {
+                        Log.i("MainActivity", "✅ Method 4 confirmed we are the default app")
+                        return true
+                    }
+                } catch (e: Exception) {
+                    Log.w("MainActivity", "Method 4 (Private Field) failed: ${e.message}")
+                }
+            }
+            
+            // Method 5: Check if we can actually start the service (practical test)
+            try {
+                val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
+                startService(serviceStartIntent)
+                Log.i("MainActivity", "Method 5 (Service Start) - Successfully started CallScreeningService")
+                Log.i("MainActivity", "This suggests the service is properly registered")
+                // Note: This doesn't confirm we're the default, just that service works
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Method 5 (Service Start) failed: ${e.message}")
+            }
+            
+            Log.w("MainActivity", "❌ Could not confirm we are the default call screening app")
+            Log.w("MainActivity", "Current default app: $defaultApp")
+            Log.w("MainActivity", "Our package: $packageName")
+            Log.w("MainActivity", "User needs to set this app as default in Settings")
+            
+            false
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
             false
         }
     }
@@ -548,6 +581,8 @@ class MainActivity: FlutterActivity() {
     
     private fun testCallScreeningService() {
         Log.i("MainActivity", "=== TESTING CALL SCREENING SERVICE ACTIVATION ===")
+        Log.i("MainActivity", "Package: $packageName")
+        Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
         
         // Check if service is registered
         val packageManager = packageManager
@@ -555,136 +590,143 @@ class MainActivity: FlutterActivity() {
         serviceIntent.setPackage(packageName)
         val resolveInfo = packageManager.resolveService(serviceIntent, 0)
         
-        Log.i("MainActivity", "Service registered: ${resolveInfo != null}")
+        val serviceRegistered = resolveInfo != null
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
         
         if (resolveInfo != null) {
-            Log.i("MainActivity", "Service is REGISTERED - this is good!")
+            Log.i("MainActivity", "✅ Service is REGISTERED - this is good!")
             Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
             Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
+            Log.i("MainActivity", "Service name: ${resolveInfo.serviceInfo.name}")
+            Log.i("MainActivity", "Service package: ${resolveInfo.serviceInfo.packageName}")
             
             // Check if we can start the service
             try {
                 val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
                 Log.i("MainActivity", "Attempting to start CallScreeningService for testing...")
                 startService(serviceStartIntent)
-                Log.i("MainActivity", "CallScreeningService started successfully")
+                Log.i("MainActivity", "✅ CallScreeningService started successfully")
                 Log.i("MainActivity", "Check logs for 'CALL SCREENING SERVICE CREATED' message")
             } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to start CallScreeningService: ${e.message}")
+                Log.e("MainActivity", "❌ Failed to start CallScreeningService: ${e.message}")
             }
         } else {
-            Log.e("MainActivity", "Service is NOT REGISTERED - this is the problem!")
+            Log.e("MainActivity", "❌ Service is NOT REGISTERED - this is the problem!")
             Log.e("MainActivity", "The CallScreeningService is not properly registered in AndroidManifest.xml")
+            Log.e("MainActivity", "Check that the service is declared with the correct intent-filter")
         }
         
         // Check if we're the default call screening app
-        try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                val telecomManager = getSystemService(TELECOM_SERVICE) as TelecomManager
-                var isDefault = false
-                var defaultApp: String? = null
-                
-                // Try multiple methods to check if we're the default call screening app
-                try {
-                    Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
-                    Log.i("MainActivity", "Our package: $packageName")
-                    
-                    // Method 1: Use reflection (works on Android 10+)
-                    try {
-                        val method = telecomManager.javaClass.getMethod("getDefaultCallScreeningApp")
-                        defaultApp = method.invoke(telecomManager) as String?
-                        isDefault = defaultApp == packageName
-                        Log.i("MainActivity", "Method 1 - Default call screening app: $defaultApp")
-                        Log.i("MainActivity", "Method 1 - Is our app default: $isDefault")
-                    } catch (reflectionException: Exception) {
-                        Log.w("MainActivity", "Method 1 failed: ${reflectionException.message}")
-                        
-                        // Method 2: Check via Settings (Android 11+ specific)
-                        try {
-                            val settingsValue = android.provider.Settings.Secure.getString(
-                                contentResolver, 
-                                "call_screening_app"
-                            )
-                            defaultApp = settingsValue
-                            isDefault = settingsValue == packageName
-                            Log.i("MainActivity", "Method 2 - Settings call_screening_app: $settingsValue")
-                            Log.i("MainActivity", "Method 2 - Is our app default: $isDefault")
-                        } catch (settingsException: Exception) {
-                            Log.w("MainActivity", "Method 2 failed: ${settingsException.message}")
-                            
-                            // Method 3: Check via another settings key
-                            try {
-                                val settingsValue2 = android.provider.Settings.Secure.getString(
-                                    contentResolver, 
-                                    "default_call_screening_app"
-                                )
-                                defaultApp = settingsValue2
-                                isDefault = settingsValue2 == packageName
-                                Log.i("MainActivity", "Method 3 - Settings default_call_screening_app: $settingsValue2")
-                                Log.i("MainActivity", "Method 3 - Is our app default: $isDefault")
-                            } catch (settingsException2: Exception) {
-                                Log.w("MainActivity", "Method 3 failed: ${settingsException2.message}")
-                                
-                                // Method 4: For Android 11+, check if we can access the property directly
-                                try {
-                                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                                        // Android 11+ might have the property available
-                                        val field = telecomManager.javaClass.getDeclaredField("mDefaultCallScreeningApp")
-                                        field.isAccessible = true
-                                        val fieldValue = field.get(telecomManager) as String?
-                                        defaultApp = fieldValue
-                                        isDefault = fieldValue == packageName
-                                        Log.i("MainActivity", "Method 4 - Field mDefaultCallScreeningApp: $fieldValue")
-                                        Log.i("MainActivity", "Method 4 - Is our app default: $isDefault")
-                                    } else {
-                                        Log.i("MainActivity", "Method 4 - Android version too old for field access")
-                                        isDefault = false
-                                    }
-                                } catch (fieldException: Exception) {
-                                    Log.w("MainActivity", "Method 4 failed: ${fieldException.message}")
-                                    
-                                    // Method 5: Check if the service is actually being called
-                                    // If we can't determine the default app, assume we're not it
-                                    // but log that the service is registered
-                                    Log.w("MainActivity", "Could not determine default call screening app")
-                                    Log.w("MainActivity", "Service is registered, but default status unknown")
-                                    isDefault = false
-                                }
-                            }
-                        }
-                    }
-                    
-                    Log.i("MainActivity", "Our package: $packageName")
-                    Log.i("MainActivity", "Final result - Is our app default: $isDefault")
-                    
-                    if (isDefault) {
-                        Log.i("MainActivity", "✅ WE ARE THE DEFAULT CALL SCREENING APP!")
-                        Log.i("MainActivity", "Calls should be screened by our service")
-                    } else {
-                        Log.w("MainActivity", "❌ WE ARE NOT THE DEFAULT CALL SCREENING APP")
-                        Log.w("MainActivity", "Current default app: $defaultApp")
-                        Log.w("MainActivity", "User must set this app as default in Settings")
-                        Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
-                    }
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Error checking default call screening app: ${e.message}")
-                }
-            } else {
-                Log.i("MainActivity", "Android version < 10, default call screening not available")
-                Log.i("MainActivity", "Service registration is sufficient for older versions")
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error checking call screening status: ${e.message}")
+        val isDefault = checkIfDefaultCallScreeningApp()
+        
+        Log.i("MainActivity", "=== FINAL STATUS ===")
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
+        Log.i("MainActivity", "Is default app: $isDefault")
+        
+        if (resolveInfo != null && isDefault) {
+            Log.i("MainActivity", "🎉 EVERYTHING IS WORKING! Call screening should work!")
+        } else if (resolveInfo != null && !isDefault) {
+            Log.w("MainActivity", "⚠️ Service is registered but NOT set as default")
+            Log.w("MainActivity", "User must set this app as default call screening app")
+            Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+        } else if (resolveInfo == null) {
+            Log.e("MainActivity", "❌ Service is not registered - fix AndroidManifest.xml")
         }
         
         Log.i("MainActivity", "=== CALL SCREENING SERVICE TEST COMPLETED ===")
     }
     
+    private fun testCallScreeningServiceWithResults(): Map<String, Any> {
+        val results = mutableMapOf<String, Any>()
+        
+        Log.i("MainActivity", "=== TESTING CALL SCREENING SERVICE ACTIVATION ===")
+        Log.i("MainActivity", "Package: $packageName")
+        Log.i("MainActivity", "Android version: ${android.os.Build.VERSION.SDK_INT}")
+        
+        results["packageName"] = packageName
+        results["androidVersion"] = android.os.Build.VERSION.SDK_INT
+        
+        // Check if service is registered
+        val packageManager = packageManager
+        val serviceIntent = Intent("android.telecom.CallScreeningService")
+        serviceIntent.setPackage(packageName)
+        val resolveInfo = packageManager.resolveService(serviceIntent, 0)
+        
+        val serviceRegistered = resolveInfo != null
+        results["serviceRegistered"] = serviceRegistered
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
+        
+        if (resolveInfo != null) {
+            results["serviceEnabled"] = resolveInfo.serviceInfo.enabled
+            results["serviceExported"] = resolveInfo.serviceInfo.exported
+            results["serviceName"] = resolveInfo.serviceInfo.name
+            results["servicePackage"] = resolveInfo.serviceInfo.packageName
+            
+            Log.i("MainActivity", "✅ Service is REGISTERED - this is good!")
+            Log.i("MainActivity", "Service enabled: ${resolveInfo.serviceInfo.enabled}")
+            Log.i("MainActivity", "Service exported: ${resolveInfo.serviceInfo.exported}")
+            Log.i("MainActivity", "Service name: ${resolveInfo.serviceInfo.name}")
+            Log.i("MainActivity", "Service package: ${resolveInfo.serviceInfo.packageName}")
+            
+            // Check if we can start the service
+            try {
+                val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
+                Log.i("MainActivity", "Attempting to start CallScreeningService for testing...")
+                startService(serviceStartIntent)
+                results["serviceStartSuccess"] = true
+                Log.i("MainActivity", "✅ CallScreeningService started successfully")
+                Log.i("MainActivity", "Check logs for 'CALL SCREENING SERVICE CREATED' message")
+            } catch (e: Exception) {
+                results["serviceStartSuccess"] = false
+                results["serviceStartError"] = e.message ?: "Unknown error"
+                Log.e("MainActivity", "❌ Failed to start CallScreeningService: ${e.message}")
+            }
+        } else {
+            results["serviceEnabled"] = false
+            results["serviceExported"] = false
+            results["serviceName"] = "Not registered"
+            results["servicePackage"] = "Not registered"
+            results["serviceStartSuccess"] = false
+            results["serviceStartError"] = "Service not registered"
+            
+            Log.e("MainActivity", "❌ Service is NOT REGISTERED - this is the problem!")
+            Log.e("MainActivity", "The CallScreeningService is not properly registered in AndroidManifest.xml")
+            Log.e("MainActivity", "Check that the service is declared with the correct intent-filter")
+        }
+        
+        // Check if we're the default call screening app
+        val isDefault = checkIfDefaultCallScreeningApp()
+        results["isDefaultApp"] = isDefault
+        
+        Log.i("MainActivity", "=== FINAL STATUS ===")
+        Log.i("MainActivity", "Service registered: $serviceRegistered")
+        Log.i("MainActivity", "Is default app: $isDefault")
+        
+        val finalStatus = when {
+            resolveInfo != null && isDefault -> "WORKING"
+            resolveInfo != null && !isDefault -> "NOT_DEFAULT"
+            resolveInfo == null -> "NOT_REGISTERED"
+            else -> "UNKNOWN"
+        }
+        results["finalStatus"] = finalStatus
+        
+        if (resolveInfo != null && isDefault) {
+            Log.i("MainActivity", "🎉 EVERYTHING IS WORKING! Call screening should work!")
+        } else if (resolveInfo != null && !isDefault) {
+            Log.w("MainActivity", "⚠️ Service is registered but NOT set as default")
+            Log.w("MainActivity", "User must set this app as default call screening app")
+            Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+        } else if (resolveInfo == null) {
+            Log.e("MainActivity", "❌ Service is not registered - fix AndroidManifest.xml")
+        }
+        
+        Log.i("MainActivity", "=== CALL SCREENING SERVICE TEST COMPLETED ===")
+        return results
+    }
+    
     private fun testCallScreeningWithFakeCall() {
         Log.i("MainActivity", "=== TESTING CALL SCREENING WITH FAKE CALL ===")
-        
-        // This method tests if the CallScreeningService is actually being triggered
-        // by simulating a call screening event
+        Log.i("MainActivity", "This test verifies that the CallScreeningService can be created and started")
         
         try {
             // Check if service is registered first
@@ -694,29 +736,46 @@ class MainActivity: FlutterActivity() {
             val resolveInfo = packageManager.resolveService(serviceIntent, 0)
             
             if (resolveInfo == null) {
-                Log.e("MainActivity", "CallScreeningService is not registered!")
+                Log.e("MainActivity", "❌ CallScreeningService is not registered!")
+                Log.e("MainActivity", "This means the service is not declared in AndroidManifest.xml")
                 return
             }
             
-            Log.i("MainActivity", "CallScreeningService is registered")
+            Log.i("MainActivity", "✅ CallScreeningService is registered")
+            Log.i("MainActivity", "Service info: ${resolveInfo.serviceInfo}")
             
             // Try to start the service to see if it gets created
             val serviceStartIntent = Intent(this, com.callblocker.app.service.CallScreeningService::class.java)
             startService(serviceStartIntent)
             
-            Log.i("MainActivity", "CallScreeningService started - check logs for 'CALL SCREENING SERVICE CREATED'")
-            Log.i("MainActivity", "If you see that message, the service is working")
-            Log.i("MainActivity", "If calls are still not being screened, the issue is that the app is not set as default")
+            Log.i("MainActivity", "✅ CallScreeningService started successfully")
+            Log.i("MainActivity", "Check logs for 'CALL SCREENING SERVICE CREATED' message")
+            Log.i("MainActivity", "If you see that message, the service is working properly")
             
-            // For Android 11, we need to be more specific about the detection
-            if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.R) {
-                Log.i("MainActivity", "Android 11 detected - call screening detection can be tricky")
-                Log.i("MainActivity", "Even if detection shows 'not default', the service might still work")
+            // Check if we're the default app
+            val isDefault = checkIfDefaultCallScreeningApp()
+            
+            if (isDefault) {
+                Log.i("MainActivity", "🎉 We are the default call screening app!")
+                Log.i("MainActivity", "Calls should be screened by our service")
                 Log.i("MainActivity", "Test by making an actual call to see if it gets screened")
+            } else {
+                Log.w("MainActivity", "⚠️ We are NOT the default call screening app")
+                Log.w("MainActivity", "Service is working, but calls won't be screened until set as default")
+                Log.w("MainActivity", "Go to Settings > Apps > Default Apps > Call Screening App")
+                Log.w("MainActivity", "Select this app as the default call screening app")
+            }
+            
+            // For Android 11, provide specific guidance
+            if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.R) {
+                Log.i("MainActivity", "📱 Android 11 detected - call screening detection can be tricky")
+                Log.i("MainActivity", "Even if detection shows 'not default', the service might still work")
+                Log.i("MainActivity", "The best test is to make an actual call and see if it gets screened")
             }
             
         } catch (e: Exception) {
-            Log.e("MainActivity", "Error testing call screening with fake call: ${e.message}")
+            Log.e("MainActivity", "❌ Error testing call screening with fake call: ${e.message}")
+            e.printStackTrace()
         }
         
         Log.i("MainActivity", "=== FAKE CALL TEST COMPLETED ===")

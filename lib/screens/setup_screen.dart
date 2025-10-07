@@ -30,6 +30,10 @@ class _SetupScreenState extends State<SetupScreen> {
   Future<void> _checkCallScreeningStatus() async {
     setState(() => _isLoading = true);
     _superLogService.addInfo('SetupScreen', 'Checking call screening status...');
+    
+    // Ensure CallBlockerService has access to SuperLogService
+    _callBlockerService.setSuperLogService(_superLogService);
+    
     try {
       final isEnabled = await _callBlockerService.isCallScreeningEnabled();
       setState(() {
@@ -37,10 +41,38 @@ class _SetupScreenState extends State<SetupScreen> {
         _isLoading = false;
       });
       _superLogService.addInfo('SetupScreen', 'Call screening status: $isEnabled');
+      
+      // Show a more detailed status message
+      if (mounted) {
+        String statusMessage;
+        if (isEnabled) {
+          statusMessage = 'Call screening is enabled and working!';
+        } else {
+          statusMessage = 'Call screening is disabled. Use the debug tools to check why.';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(statusMessage),
+            backgroundColor: isEnabled ? Colors.green : Colors.orange,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
       setState(() => _isLoading = false);
       _superLogService.addError('SetupScreen', 'Failed to check call screening status', details: e.toString());
       await _logService.addError('Failed to check call screening status', details: e.toString());
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to check status: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -242,6 +274,41 @@ class _SetupScreenState extends State<SetupScreen> {
                     const Text('3. The app will automatically enable DND during non-business hours'),
                     const Text('4. DND blocks calls, notifications, and alerts'),
                     const Text('5. SMS auto-reply will still work when DND is active'),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        border: Border.all(color: Colors.orange.shade200),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.info, color: Colors.orange.shade700, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Important for Android 11+',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'If the status shows "Disabled" even after setting as default, try the debug tools below. Some Android versions have detection issues, but the service may still work.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'DND approach works on all Android devices (6.0+) and is more reliable than call screening.',
@@ -539,6 +606,80 @@ class _SetupScreenState extends State<SetupScreen> {
                      ),
                    ],
                  ),
+                    const SizedBox(height: 8),
+                    // Comprehensive test button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          _superLogService.addInfo('SetupScreen', 'Running comprehensive diagnostic test...');
+                          
+                          // Ensure CallBlockerService has access to SuperLogService
+                          _callBlockerService.setSuperLogService(_superLogService);
+                          
+                          try {
+                            _superLogService.addInfo('SetupScreen', 'Step 1: Testing CallScreeningService...');
+                            try {
+                              await _callBlockerService.testCallScreeningService();
+                              _superLogService.addInfo('SetupScreen', 'Step 1 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 1 failed: $e');
+                            }
+                            
+                            await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 2: Testing CallScreeningService with fake call...');
+                            try {
+                              await _callBlockerService.testCallScreeningWithFakeCall();
+                              _superLogService.addInfo('SetupScreen', 'Step 2 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 2 failed: $e');
+                            }
+                            
+                            await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 3: Testing call screening detection...');
+                            try {
+                              await _callBlockerService.testCallScreening();
+                              _superLogService.addInfo('SetupScreen', 'Step 3 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 3 failed: $e');
+                            }
+                            
+                            await Future.delayed(const Duration(seconds: 1));
+                            _superLogService.addInfo('SetupScreen', 'Step 4: Testing SMS functionality...');
+                            try {
+                              await _callBlockerService.testSMS('+1234567890', 'Test SMS from Call Blocker');
+                              _superLogService.addInfo('SetupScreen', 'Step 4 completed successfully');
+                            } catch (e) {
+                              _superLogService.addError('SetupScreen', 'Step 4 failed: $e');
+                            }
+                            
+                            _superLogService.addInfo('SetupScreen', 'Comprehensive diagnostic test completed');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Comprehensive test completed - check Super Log for detailed results'),
+                                backgroundColor: Colors.purple,
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                          } catch (e) {
+                            _superLogService.addError('SetupScreen', 'Comprehensive test failed', details: e.toString());
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Test failed: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.science),
+                        label: const Text('Run Comprehensive Diagnostic Test'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Use these buttons to test functionality and check logs for debugging information.',
